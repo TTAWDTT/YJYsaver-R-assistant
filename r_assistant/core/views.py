@@ -13,6 +13,8 @@ from django.views.generic import TemplateView, ListView
 from django.views import View
 
 from .models import RequestLog, CodeSolution, ConversationHistory, UserSession
+from services.langgraph_service import langgraph_service
+from services.ai_service import AIServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -36,82 +38,6 @@ def get_client_ip(request):
     return ip
 
 
-def simple_ai_response(request_type, user_input):
-    """简单的AI回复模拟，实际应用中应该调用真实的AI API"""
-    
-    if request_type == 'explain':
-        return f"""
-这段R代码的解释：
-
-```r
-{user_input}
-```
-
-基本功能分析：
-1. 这段代码的主要目的是处理数据
-2. 涉及的主要函数和操作
-3. 代码执行流程
-4. 可能的输出结果
-
-注意事项：
-- 确保数据格式正确
-- 检查变量名拼写
-- 注意函数参数的使用
-
-建议优化：
-- 可以添加错误处理
-- 考虑代码的可读性
-- 添加适当的注释
-
-*注：这是一个演示回复，实际使用时请配置真实的AI API密钥*
-"""
-    
-    elif request_type == 'answer':
-        solutions = [
-            {
-                'title': '基础解决方案',
-                'code': f'# 基于您的问题：{user_input}\n\n# 方案一：基础实现\nlibrary(ggplot2)\ndata <- read.csv("data.csv")\nresult <- summary(data)\nprint(result)',
-                'explanation': '这是一个基础的解决方案，适用于初学者。使用了R语言的基本函数来处理数据。'
-            },
-            {
-                'title': '进阶解决方案', 
-                'code': f'# 方案二：进阶实现\nlibrary(dplyr)\nlibrary(ggplot2)\n\ndata %>%\n  filter(!is.na(value)) %>%\n  group_by(category) %>%\n  summarise(mean_val = mean(value)) %>%\n  ggplot(aes(x = category, y = mean_val)) +\n  geom_col()',
-                'explanation': '这是一个更高级的解决方案，使用了tidyverse生态系统，代码更简洁易读。'
-            },
-            {
-                'title': '专业解决方案',
-                'code': f'# 方案三：专业实现\nlibrary(data.table)\nlibrary(plotly)\n\nDT <- fread("data.csv")\nresult <- DT[, .(mean_val = mean(value, na.rm = TRUE)), by = category]\np <- plot_ly(result, x = ~category, y = ~mean_val, type = "bar")\np',
-                'explanation': '这是一个专业级的解决方案，使用了高性能的data.table包和交互式可视化。'
-            }
-        ]
-        
-        response = f"针对您的问题：{user_input}\n\n我为您提供三种解决方案：\n\n"
-        for i, sol in enumerate(solutions, 1):
-            response += f"**方案{i}：{sol['title']}**\n```r\n{sol['code']}\n```\n{sol['explanation']}\n\n"
-        
-        response += "*注：这是一个演示回复，实际使用时请配置真实的AI API密钥*"
-        return response, solutions
-    
-    elif request_type == 'talk':
-        return f"""
-关于您提到的"{user_input}"，我来为您详细解答：
-
-作为R语言助手，我可以帮助您：
-- 解释R语言代码的功能和语法
-- 提供数据分析的解决方案
-- 回答R语言相关的学习问题
-- 协助解决编程中遇到的问题
-
-如果您有具体的R语言问题，欢迎继续提问！
-
-*注：这是一个演示回复，实际使用时请配置真实的AI API密钥*
-"""
-    
-    return "抱歉，我暂时无法处理这类请求。"
-
-
-class BaseAPIView(View):
-    """API视图基类"""
 class IndexView(TemplateView):
     template_name = 'core/index.html'
 
@@ -188,29 +114,34 @@ class ExplainView(TemplateView):
             )
             
             try:
-                # 调用简单AI回复
-                explanation = simple_ai_response('explain', r_code)
+                # 使用LangGraph服务进行代码解释
+                result = langgraph_service.explain_code(r_code, session_id)
                 
                 # 计算响应时间
-                processing_time = time.time() - start_time
+                processing_time = result.get('processing_time', 0)
                 
                 # 更新请求日志
-                request_log.response_content = explanation
-                request_log.success = True
+                request_log.response_content = result['content']
+                request_log.success = result['success']
                 request_log.processing_time = processing_time
+                if not result['success']:
+                    request_log.error_message = "LangGraph工作流执行失败"
                 request_log.save()
                 
                 context = self.get_context_data()
                 context.update({
-                    'explanation': explanation,
+                    'explanation': result['content'],
                     'original_code': r_code,
-                    'processing_time': processing_time
+                    'processing_time': processing_time,
+                    'workflow_metadata': result.get('metadata', {}),
+                    'quality_score': result.get('metadata', {}).get('quality_score'),
+                    'code_analysis': result.get('metadata', {}).get('code_analysis')
                 })
                 
                 return self.render_to_response(context)
                 
-            except Exception as e:
-                logger.error("处理代码解释时出错: %s", str(e))
+            except AIServiceError as e:
+                logger.error("LangGraph代码解释失败: %s", str(e))
                 
                 # 更新请求日志
                 request_log.success = False
@@ -219,7 +150,7 @@ class ExplainView(TemplateView):
                 request_log.save()
                 
                 context = self.get_context_data()
-                context['error_message'] = f"解释代码时出现错误: {str(e)}"
+                context['error_message'] = f"代码解释失败: {str(e)}"
                 return self.render_to_response(context)
                 
         except Exception as e:
@@ -272,19 +203,22 @@ class AnswerView(TemplateView):
             )
             
             try:
-                # 调用简单AI回复，获取回复和解决方案
-                response_content, solutions = simple_ai_response('answer', problem)
+                # 使用LangGraph服务进行问题求解
+                result = langgraph_service.solve_problem(problem, session_id)
                 
                 # 计算响应时间
-                processing_time = time.time() - start_time
+                processing_time = result.get('processing_time', 0)
                 
                 # 更新请求日志
-                request_log.response_content = response_content
-                request_log.success = True
+                request_log.response_content = result['content']
+                request_log.success = result['success']
                 request_log.processing_time = processing_time
+                if not result['success']:
+                    request_log.error_message = "LangGraph工作流执行失败"
                 request_log.save()
                 
-                # 创建代码解决方案记录
+                # 保存解决方案到数据库
+                solutions = result.get('solutions', [])
                 for i, solution in enumerate(solutions):
                     CodeSolution.objects.create(
                         request_log=request_log,
@@ -292,21 +226,23 @@ class AnswerView(TemplateView):
                         title=solution['title'],
                         code=solution['code'],
                         explanation=solution['explanation'],
-                        filename=f'solution_{i+1}.R'
+                        filename=solution.get('filename', f'solution_{i+1}.R')
                     )
                 
                 context = self.get_context_data()
                 context.update({
-                    'answer_result': response_content,
+                    'answer_result': result['content'],
                     'original_problem': problem,
                     'solutions': solutions,
-                    'processing_time': processing_time
+                    'processing_time': processing_time,
+                    'workflow_metadata': result.get('metadata', {}),
+                    'problem_type': result.get('metadata', {}).get('problem_type')
                 })
                 
                 return self.render_to_response(context)
                 
-            except Exception as e:
-                logger.error("处理问题求解时出错: %s", str(e))
+            except AIServiceError as e:
+                logger.error("LangGraph问题求解失败: %s", str(e))
                 
                 # 更新请求日志
                 request_log.success = False
@@ -315,7 +251,7 @@ class AnswerView(TemplateView):
                 request_log.save()
                 
                 context = self.get_context_data()
-                context['error_message'] = f"求解问题时出现错误: {str(e)}"
+                context['error_message'] = f"问题求解失败: {str(e)}"
                 return self.render_to_response(context)
                 
         except Exception as e:
@@ -374,30 +310,40 @@ class TalkView(TemplateView):
             )
             
             try:
-                # 调用简单AI回复
-                response = simple_ai_response('talk', message)
+                # 获取对话历史
+                conversation_history = list(
+                    ConversationHistory.objects.filter(
+                        session_id=session_id
+                    ).order_by('timestamp').values('role', 'content')[-10:]  # 最近10条
+                )
+                
+                # 使用LangGraph服务进行智能对话
+                result = langgraph_service.chat(message, conversation_history, session_id)
                 
                 # 计算响应时间
-                processing_time = time.time() - start_time
+                processing_time = result.get('processing_time', 0)
                 
-                # 记录AI回复
+                # 保存AI回复
+                ai_response = result['content']
                 ConversationHistory.objects.create(
                     session_id=session_id,
                     role='assistant',
-                    content=response
+                    content=ai_response
                 )
                 
                 # 更新请求日志
-                request_log.response_content = response
-                request_log.success = True
+                request_log.response_content = ai_response
+                request_log.success = result['success']
                 request_log.processing_time = processing_time
+                if not result['success']:
+                    request_log.error_message = "LangGraph工作流执行失败"
                 request_log.save()
                 
                 # 重定向到同一页面以刷新对话历史
                 return redirect('core:talk')
                 
-            except Exception as e:
-                logger.error("处理对话时出错: %s", str(e))
+            except AIServiceError as e:
+                logger.error("LangGraph智能对话失败: %s", str(e))
                 
                 # 更新请求日志
                 request_log.success = False
@@ -406,7 +352,7 @@ class TalkView(TemplateView):
                 request_log.save()
                 
                 context = self.get_context_data()
-                context['error_message'] = f"对话时出现错误: {str(e)}"
+                context['error_message'] = f"智能对话失败: {str(e)}"
                 return self.render_to_response(context)
                 
         except Exception as e:

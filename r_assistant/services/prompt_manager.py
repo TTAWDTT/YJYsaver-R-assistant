@@ -1,184 +1,133 @@
 """
 提示词管理器
-集中管理所有AI提示词模板
+集中管理所有AI提示词模板 - 使用新的模块化提示词系统
 """
+
+from .advanced_prompt_manager import advanced_prompt_manager
+
 
 class PromptManager:
-    """提示词管理器类"""
+    """提示词管理器类 - 重构以使用新的提示词系统"""
     
     @staticmethod
-    def get_explain_prompt(code: str) -> str:
+    def get_explain_prompt(code: str, additional_context: str = "") -> str:
         """获取代码解释提示词"""
-        return f"""
-你是一位经验丰富、温和友善的R语言专家。请用轻松平易近人的语气解释下面的R代码，就像在和朋友聊天一样。
-
-请按照以下要求：
-1. 用通俗易懂的语言解释代码的功能
-2. 逐步分析代码的逻辑和执行过程
-3. 指出代码中的关键概念和技巧
-4. 如果有可能的改进建议，可以友好地提及
-5. 语气要温和、鼓励，避免过于技术化的表述
-
-R代码：
-```r
-{code}
-```
-
-请开始你的解释：
-"""
+        return advanced_prompt_manager.get_prompt(
+            'code_explainer', 'user_template',
+            code=code, 
+            additional_context=additional_context
+        )
     
     @staticmethod
-    def get_answer_prompt(problem: str) -> str:
+    def get_answer_prompt(problem: str, additional_requirements: str = "") -> str:
         """获取作业求解提示词"""
-        return f"""
-你是一位资深的R语言教师和编程专家。学生向你请教以下R语言问题，请提供3种不同的解决方案。
-
-问题描述：
-{problem}
-
-请按照以下格式提供3种解决方案：
-
-**方案一：[方案名称]**
-```r
-# 详细的中文注释
-# 代码实现
-```
-解释：[简要说明这种方案的特点和适用场景]
-
-**方案二：[方案名称]**
-```r
-# 详细的中文注释
-# 代码实现
-```
-解释：[简要说明这种方案的特点和适用场景]
-
-**方案三：[方案名称]**
-```r
-# 详细的中文注释
-# 代码实现
-```
-解释：[简要说明这种方案的特点和适用场景]
-
-要求：
-1. 每个方案都要有详细的中文注释
-2. 代码要规范、可执行
-3. 三种方案要体现不同的思路或复杂度
-4. 提供简洁的文件命名建议（如：solution1.R, solution2.R, solution3.R）
-"""
+        return advanced_prompt_manager.get_prompt(
+            'problem_solver', 'user_template',
+            problem_description=problem,
+            additional_requirements=additional_requirements
+        )
     
     @staticmethod
-    def get_talk_prompt() -> str:
-        """获取智能对话系统提示词"""
-        return """
-你是一位经验丰富、友善热情的R语言专家顾问。你的任务是帮助学习者解决R语言相关的各种问题。
-
-你的特点：
-1. 专业知识深厚：精通R语言的各个方面，包括数据分析、统计建模、可视化、包开发等
-2. 教学能力强：善于用简单易懂的方式解释复杂概念
-3. 友善耐心：始终保持友好、鼓励的态度，让学习者感到轻松
-4. 实用导向：提供的建议和解决方案都要实用、可操作
-
-你可以帮助解决的问题包括但不限于：
-- R语言基础语法和概念
-- 数据处理和分析技巧
-- 统计方法和建模
-- 数据可视化
-- R包的使用和开发
-- 代码优化和最佳实践
-- 学习路径和资源推荐
-- 错误诊断和调试
-
-请始终用温和、鼓励的语气回答问题，并提供具体、可操作的建议。如果涉及代码，请提供清晰的示例和注释。
-"""
+    def get_talk_prompt(message: str, conversation_context: str = "") -> str:
+        """获取对话提示词"""
+        return advanced_prompt_manager.get_prompt(
+            'conversation', 'user_template',
+            message=message,
+            conversation_context=conversation_context
+        )
     
     @staticmethod
-    def get_code_quality_prompt(code: str) -> str:
-        """获取代码质量分析提示词"""
-        return f"""
-请从以下维度分析这段R代码的质量，并给出改进建议：
-
-1. 代码风格和规范性
-2. 性能优化可能性
-3. 可读性和维护性
-4. 错误处理和健壮性
-5. 最佳实践遵循情况
-
-R代码：
-```r
-{code}
-```
-
-请提供：
-1. 总体质量评分（0-100分）
-2. 各维度的具体分析
-3. 改进建议
-4. 优化后的代码示例（如适用）
-
-格式要求：
-- 分析要客观、具体
-- 建议要可操作
-- 如果代码较好，也要给予肯定
-"""
+    def get_system_prompt(agent_type: str = "base") -> str:
+        """获取系统提示词"""
+        if agent_type == "base":
+            return advanced_prompt_manager.get_prompt('system', 'base_system')
+        return advanced_prompt_manager.get_system_prompt(agent_type)
     
     @staticmethod
-    def get_test_generation_prompt(code: str) -> str:
-        """获取测试用例生成提示词"""
-        return f"""
-请为以下R代码生成完整的测试用例，使用testthat包：
-
-R代码：
-```r
-{code}
-```
-
-请提供：
-1. 基本功能测试
-2. 边界条件测试
-3. 异常情况测试
-4. 性能相关测试（如适用）
-
-测试用例要求：
-- 使用testthat包的标准语法
-- 覆盖主要功能和边界情况
-- 包含清晰的测试描述
-- 提供测试数据准备代码
-"""
-    
-    @staticmethod
-    def get_optimization_prompt(code: str) -> str:
-        """获取代码优化提示词"""
-        return f"""
-请分析以下R代码并提供优化建议：
-
-R代码：
-```r
-{code}
-```
-
-请从以下角度进行优化分析：
-1. 性能优化（执行速度、内存使用）
-2. 代码简化（减少冗余、提高效率）
-3. 现代R语法（使用最新的包和方法）
-4. 并行化可能性
-5. 向量化改进
-
-提供：
-1. 当前代码的性能瓶颈分析
-2. 优化后的代码版本
-3. 预期的性能提升说明
-4. 使用的优化技术解释
-"""
-
-    @staticmethod
-    def format_conversation_history(history: list) -> str:
-        """格式化对话历史为提示词"""
-        if not history:
-            return ""
+    def get_analysis_prompt(code: str, analysis_type: str = "quality") -> str:
+        """获取代码分析提示词"""
+        prompt_map = {
+            'quality': 'quality_analysis',
+            'performance': 'performance_analysis', 
+            'style': 'style_check',
+            'security': 'security_analysis'
+        }
         
-        formatted = "\n对话历史：\n"
-        for msg in history[-10:]:  # 只保留最近10条对话
-            role = "用户" if msg['role'] == 'user' else "助手"
-            formatted += f"{role}：{msg['content']}\n"
+        prompt_type = prompt_map.get(analysis_type, 'quality_analysis')
         
-        formatted += "\n请基于以上对话历史继续回答：\n"
-        return formatted
+        return advanced_prompt_manager.get_prompt(
+            'code_analyzer', prompt_type,
+            code=code,
+            code_purpose="代码分析",
+            additional_context=""
+        )
+    
+    @staticmethod
+    def get_error_explanation_prompt(code: str, error_msg: str) -> str:
+        """获取错误解释提示词"""
+        return advanced_prompt_manager.get_prompt(
+            'code_explainer', 'error_explanation',
+            code=code,
+            error_msg=error_msg
+        )
+    
+    @staticmethod
+    def get_data_analysis_prompt(data_description: str, analysis_goal: str, expected_output: str = "") -> str:
+        """获取数据分析提示词"""
+        return advanced_prompt_manager.get_prompt(
+            'problem_solver', 'data_analysis_template',
+            data_description=data_description,
+            analysis_goal=analysis_goal,
+            expected_output=expected_output,
+            additional_context=""
+        )
+    
+    @staticmethod
+    def get_visualization_prompt(data_features: str, chart_type: str = "自动选择", visualization_goal: str = "") -> str:
+        """获取可视化提示词"""
+        return advanced_prompt_manager.get_prompt(
+            'problem_solver', 'visualization_request',
+            data_features=data_features,
+            chart_type=chart_type,
+            visualization_goal=visualization_goal,
+            style_preferences=""
+        )
+    
+    # 新增的高级功能方法
+    @staticmethod
+    def get_available_prompts() -> dict:
+        """获取所有可用的提示词类型"""
+        return advanced_prompt_manager.list_available_prompts()
+    
+    @staticmethod
+    def validate_all_prompts() -> dict:
+        """验证所有提示词模板"""
+        return advanced_prompt_manager.validate_prompts()
+    
+    @staticmethod
+    def get_prompt_info(category: str, prompt_type: str) -> dict:
+        """获取特定提示词的详细信息"""
+        return advanced_prompt_manager.get_prompt_info(category, prompt_type)
+    
+    @staticmethod
+    def get_custom_prompt(category: str, prompt_type: str, **kwargs) -> str:
+        """获取自定义提示词"""
+        return advanced_prompt_manager.get_prompt(category, prompt_type, **kwargs)
+
+
+# 兼容性别名，支持旧代码
+def get_explain_prompt(code: str) -> str:
+    """向后兼容的函数"""
+    return PromptManager.get_explain_prompt(code)
+
+def get_answer_prompt(problem: str) -> str:
+    """向后兼容的函数"""
+    return PromptManager.get_answer_prompt(problem)
+
+def get_talk_prompt() -> str:
+    """向后兼容的函数"""
+    return advanced_prompt_manager.get_prompt('conversation', 'greeting')
+
+def get_code_quality_prompt(code: str) -> str:
+    """向后兼容的函数"""
+    return PromptManager.get_analysis_prompt(code, 'quality')

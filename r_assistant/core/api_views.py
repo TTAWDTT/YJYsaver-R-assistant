@@ -10,7 +10,8 @@ from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 
-from services.ai_service import ai_service, AIServiceError
+from services.langgraph_service import langgraph_service
+from services.ai_service import AIServiceError
 from services.code_analyzer import code_analyzer
 from .models import ConversationHistory, RequestLog, CodeAnalysis
 
@@ -85,8 +86,8 @@ class TalkAPIView(BaseAPIView):
             request_log = self._create_request_log(request, 'talk', message)
             
             try:
-                # 调用AI服务
-                result = ai_service.chat(message, conversation_history)
+                # 调用LangGraph服务
+                result = langgraph_service.chat(message, conversation_history, session_id)
                 
                 # 保存用户消息
                 ConversationHistory.objects.create(
@@ -167,6 +168,7 @@ class AnalyzeAPIView(BaseAPIView):
             
             # 创建请求日志
             request_log = self._create_request_log(request, 'analyze', code)
+            session_id = self._get_session_id(request)
             
             try:
                 if analysis_type == 'quality':
@@ -174,7 +176,7 @@ class AnalyzeAPIView(BaseAPIView):
                     analysis_result = code_analyzer.analyze(code)
                     
                     # AI代码质量分析
-                    ai_result = ai_service.analyze_code_quality(code)
+                    ai_result = langgraph_service.analyze_code_quality(code, session_id)
                     
                     # 合并结果
                     combined_result = {
@@ -194,7 +196,7 @@ class AnalyzeAPIView(BaseAPIView):
                     
                 elif analysis_type == 'test':
                     # 测试用例生成
-                    ai_result = ai_service.generate_tests(code)
+                    ai_result = langgraph_service.generate_tests(code, session_id)
                     combined_result = {
                         'test_cases': ai_result['content'],
                         'processing_time': ai_result['processing_time']
@@ -209,7 +211,7 @@ class AnalyzeAPIView(BaseAPIView):
                     
                 elif analysis_type == 'optimization':
                     # 代码优化建议
-                    ai_result = ai_service.optimize_code(code)
+                    ai_result = langgraph_service.optimize_code(code, session_id)
                     combined_result = {
                         'optimization_suggestions': ai_result['content'],
                         'processing_time': ai_result['processing_time']
@@ -316,7 +318,7 @@ class HealthCheckAPIView(BaseAPIView):
             # 检查AI服务
             ai_status = 'available'
             try:
-                test_result = ai_service.chat("test", [])
+                test_result = langgraph_service.chat("test", [], "health_check_session")
                 if not test_result.get('content'):
                     ai_status = 'degraded'
             except Exception:
@@ -327,7 +329,7 @@ class HealthCheckAPIView(BaseAPIView):
                 'timestamp': timezone.now().isoformat(),
                 'services': {
                     'database': 'available',
-                    'ai_service': ai_status
+                    'langgraph_service': ai_status
                 }
             })
             

@@ -1,6 +1,6 @@
 # R 语言智能助手
 
-这是一个基于 Django 的 Web 应用，面向 R 语言学习者与开发者，提供智能化代码解释、作业求解与对话式 AI 助手功能。
+这是一个基于 Django 和 **LangGraph 工作流框架** 的 Web 应用，面向 R 语言学习者与开发者，提供智能化代码解释、作业求解与对话式 AI 助手功能。
 
 ## ✨ 主要功能
 
@@ -8,27 +8,38 @@
 
 1. **Answer (代码生成)** 📝
    - 输入R语言作业题目
-   - AI生成三种不同的解决方案
+   - AI生成三种不同难度的解决方案
    - 每个方案包含详细的中文注释
-   - 自动命名程序文件
+   - 自动命名程序文件和包依赖分析
 
 2. **Explain (代码解释)** 💡
    - 粘贴您的R语言代码
    - AI用平易近人的语气解释代码功能
    - 逐步分析代码逻辑和意义
-   - 通俗易懂的表达方式
+   - 自动代码质量评分和优化建议
 
 3. **Talk (智能对话)** 💬
    - 与R语言专家进行友好交流
    - 获取学习建议和编程技巧
    - 讨论R语言相关问题
-   - 专业指导和支持
+   - 上下文感知的专业指导
+
+### 🚀 新增: LangGraph工作流系统
+
+本项目现已集成 **LangGraph 工作流框架**，提供：
+
+- **状态化工作流**: 复杂任务的步骤化处理和状态管理
+- **多代理协作**: 专业化AI代理协同工作
+- **完整可观测性**: 详细的执行跟踪和性能监控
+- **高级错误处理**: 更强的容错和重试机制
+- **工作流监控**: 实时监控面板 (`/admin/workflow-monitor/`)
 
 ## 🛠️ 快速开始
 
 ### 环境要求
-- Python 3.8+
+- Python 3.11+
 - Django 5.0.14
+- LangGraph 0.2.50+
 - DeepSeek API Key
 
 ### 安装步骤
@@ -39,7 +50,7 @@ git clone https://github.com/TTAWDTT/YJYsaver-R-assistant.git
 cd YJYsaver-R-assistant
 ```
 
-2. 安装依赖
+2. 安装依赖 (包含LangGraph)
 ```bash
 pip install -r requirements.txt
 ```
@@ -48,6 +59,7 @@ pip install -r requirements.txt
 创建 `.env` 文件并填入以下配置：
 ```
 DEEPSEEK_API_KEY=your_api_key_here
+DEEPSEEK_API_URL=https://api.deepseek.com/v1
 SECRET_KEY=your_django_secret_key
 DEBUG=True
 ```
@@ -89,6 +101,8 @@ python manage.py runserver
 
 ### 后端技术
 - **Django 5.0.14** - 强大的Web框架
+- **LangGraph 0.2.50** - 智能工作流引擎
+- **LangChain 0.3.10** - AI应用开发框架
 - **DeepSeek Chat API** - 先进的AI语言模型
 - **SQLite** - 轻量级数据库
 - **模块化设计** - 易于维护和扩展
@@ -99,11 +113,19 @@ python manage.py runserver
 - **Prism.js** - 代码语法高亮
 - **CSS3动画** - 高级视觉效果
 
+### LangGraph工作流架构
+- **状态图工作流** - 基于有向图的任务流控制
+- **多代理系统** - 专业化AI代理协作
+- **状态持久化** - 会话级别的状态管理
+- **实时监控** - 工作流执行监控和性能分析
+- **错误恢复** - 智能错误处理和重试机制
+
 ### 代码特色
 - 📦 **PromptManager** - 集中化提示词管理
 - 🔧 **模块化架构** - 清晰的代码结构
 - 🎯 **服务层抽象** - 易于测试和维护
 - 📊 **完整日志记录** - 便于调试和分析
+- 🔄 **工作流引擎** - LangGraph驱动的智能处理
 
 ## 📁 项目结构
 

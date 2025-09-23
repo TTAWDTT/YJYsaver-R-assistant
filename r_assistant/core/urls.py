@@ -4,6 +4,7 @@ Core app URL configuration
 
 from django.urls import path
 from . import views
+from . import workflow_monitor
 
 app_name = 'core'
 
@@ -17,4 +18,10 @@ urlpatterns = [
     
     # Functional operations
     path('clear-history/', views.clear_history, name='clear_history'),
+    
+    # Workflow monitoring (admin only)
+    path('admin/workflow-monitor/', workflow_monitor.WorkflowMonitorView.as_view(), name='workflow_monitor'),
+    path('admin/workflow-status/', workflow_monitor.workflow_api_status, name='workflow_api_status'),
+    path('admin/clear-cache/', workflow_monitor.clear_workflow_cache, name='clear_workflow_cache'),
+    path('admin/restart-engine/', workflow_monitor.restart_workflow_engine, name='restart_workflow_engine'),
 ]
