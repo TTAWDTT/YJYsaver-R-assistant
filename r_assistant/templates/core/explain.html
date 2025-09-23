@@ -6,17 +6,23 @@
 {% block extra_css %}
 <style>
 .code-container {
-    min-height: 500px;
+    min-height: 600px;
+    height: 600px;
 }
 
 .result-container {
-    min-height: 400px;
+    min-height: 600px;
+    height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .code-input {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
+    resize: none;
+    height: 400px;
 }
 
 .analysis-section {
@@ -42,10 +48,364 @@
     text-align: center;
 }
 
+/* 代码编辑器样式 */
+.code-editor {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(26, 32, 44, 0.8);
+}
+
+.code-editor-wrapper {
+    position: relative;
+    height: 400px;
+    background: #1a202c;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.line-numbers {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50px;
+    height: 100%;
+    background: rgba(15, 20, 30, 0.9);
+    color: #64748b;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 1rem 0;
+    overflow-y: auto;
+    z-index: 2;
+    user-select: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.line-numbers .line-number {
+    display: block;
+    text-align: right;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 21px; /* 与代码行高度一致 */
+    line-height: 21px;
+}
+
+.line-numbers .line-number:hover {
+    background-color: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+}
+
+.line-numbers .line-number.selected {
+    background-color: #4299e1;
+    color: white;
+    font-weight: bold;
+    box-shadow: inset 3px 0 0 #2b6cb0;
+}
+
+.line-numbers .line-number:active {
+    transform: scale(0.98);
+}
+
+.code-textarea {
+    position: absolute;
+    left: 50px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: calc(100% - 50px);
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 1rem;
+    resize: none;
+    outline: none;
+    z-index: 1;
+}
+
+.code-textarea::selection {
+    background-color: rgba(102, 126, 234, 0.3);
+}
+
+.selected-code-info {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #cbd5e0;
+}
+
+.selection-highlight {
+    background-color: rgba(102, 126, 234, 0.2) !important;
+}
+
 .metric-value {
     font-size: 1.5rem;
     font-weight: bold;
     color: #667eea;
+}
+
+/* Markdown 样式 */
+.markdown-content {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    color: #f8fafc;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.3rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.3rem;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 0.2rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.2rem;
+    color: #a0aec0;
+}
+
+.markdown-content h4 {
+    font-size: 1.1rem;
+    color: #cbd5e0;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25rem;
+}
+
+.markdown-content code {
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fbb6ce;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.markdown-content pre {
+    background-color: rgba(26, 32, 44, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.markdown-content pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #667eea;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    background-color: rgba(102, 126, 234, 0.1);
+    border-radius: 0 0.25rem 0.25rem 0;
+    font-style: italic;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.markdown-content th {
+    background-color: rgba(102, 126, 234, 0.2);
+    font-weight: 600;
+}
+
+.markdown-content strong {
+    color: #f7fafc;
+    font-weight: 600;
+}
+
+.markdown-content em {
+    color: #cbd5e0;
+    font-style: italic;
+}
+
+.markdown-content a {
+    color: #667eea;
+    text-decoration: underline;
+}
+
+.markdown-content a:hover {
+    color: #9f7aea;
+}
+
+/* Advanced Code Editor 容器样式 */
+.advanced-code-editor {
+    height: 400px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #1e1e1e;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+/* Monaco Editor 行号优化 */
+.monaco-editor .margin {
+    background-color: #1e1e1e !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.monaco-editor .line-numbers {
+    color: #858585 !important;
+    font-size: 13px !important;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace !important;
+    font-weight: normal !important;
+    line-height: 18px !important;
+    text-align: right !important;
+    padding: 0 8px 0 0 !important;
+    min-width: 32px !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+.monaco-editor .current-line ~ .margin .line-numbers {
+    color: #c6c6c6 !important;
+}
+
+.monaco-editor .margin:hover .line-numbers {
+    color: #c6c6c6 !important;
+}
+
+.monaco-editor .monaco-editor-background {
+    background-color: #1e1e1e !important;
+}
+
+/* Fallback Editor 样式优化 */
+.fallback-code-editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.fallback-code-editor .editor-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.fallback-code-editor .line-numbers-container {
+    background: #1e1e1e;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.fallback-code-editor .line-numbers {
+    background-color: #1e1e1e;
+    color: #858585;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 18px;
+    text-align: right;
+    padding: 10px 8px 10px 0;
+    margin: 0;
+    min-width: 32px;
+    white-space: pre;
+}
+
+.fallback-code-editor .line-numbers .line-number {
+    display: block;
+    height: 18px;
+    line-height: 18px;
+    cursor: pointer;
+    padding: 0 4px 0 0;
+    margin: 0;
+    text-align: right;
+    white-space: pre;
+    transition: all 0.1s ease;
+}
+
+.fallback-code-editor .line-numbers .line-number:hover {
+    color: #c6c6c6;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.fallback-code-editor .line-numbers .line-number.selected {
+    background-color: rgba(0, 122, 204, 0.3);
+    color: #ffffff;
+}
+
+.fallback-code-editor .code-input-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.fallback-code-editor .code-textarea {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 18px;
+    padding: 10px 12px;
+    resize: none;
+    overflow: auto;
+    white-space: pre;
+    tab-size: 4;
+    outline: none;
+    margin: 0;
+}
+
+.fallback-code-editor .code-textarea::placeholder {
+    color: #6a6a6a;
+    font-style: italic;
 }
 </style>
 {% endblock %}
@@ -102,23 +462,14 @@
                         </div>
                     </div>
                     <div class="code-editor-content">
-                        <textarea 
-                            class="form-control code-input" 
-                            id="codeInput" 
-                            rows="15" 
-                            placeholder="请在此处粘贴您的R代码...
-
-示例：
-# 数据分析示例
-data <- mtcars
-summary(data$mpg)
-
-# 创建散点图
-library(ggplot2)
-ggplot(data, aes(x=wt, y=mpg)) +
-  geom_point() +
-  geom_smooth(method='lm')">
-                        </textarea>
+                        <!-- 高级代码编辑器容器 -->
+                        <div id="advanced-code-editor" class="advanced-code-editor"></div>
+                        
+                        <!-- 选中代码信息显示 -->
+                        <div id="selectedCodeInfo" class="selected-code-info" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span id="selectionDetails">已选中代码片段</span>
+                        </div>
                     </div>
                 </div>
 
@@ -157,7 +508,7 @@ ggplot(data, aes(x=wt, y=mpg)) +
                                 <h5 class="text-primary mb-0">AI解释</h5>
                                 <small class="text-muted" id="processingTime"></small>
                             </div>
-                            <div id="explanationText" class="text-light mb-3"></div>
+                            <div id="explanationText" class="text-light mb-3 markdown-content"></div>
                         </div>
                         
                         <div class="action-buttons mt-3">
@@ -188,7 +539,7 @@ ggplot(data, aes(x=wt, y=mpg)) +
                 
                 <div class="row">
                     <div class="col-md-8">
-                        <div id="analysisText" class="text-light"></div>
+                        <div id="analysisText" class="text-light markdown-content"></div>
                     </div>
                     <div class="col-md-4">
                         <div class="metrics-grid">
@@ -240,27 +591,140 @@ ggplot(data, aes(x=wt, y=mpg)) +
 <script>
 class CodeExplainer {
     constructor() {
-        this.codeInput = document.getElementById('codeInput');
         this.explainBtn = document.getElementById('explainBtn');
         this.resultContainer = document.getElementById('resultContainer');
         this.emptyState = document.getElementById('emptyState');
         this.explanationResult = document.getElementById('explanationResult');
         this.analysisSection = document.getElementById('analysisSection');
+        this.selectedCodeInfo = document.getElementById('selectedCodeInfo');
+        this.selectionDetails = document.getElementById('selectionDetails');
         
+        // 初始化高级代码编辑器
+        this.initAdvancedEditor();
         this.init();
+    }
+
+    async initAdvancedEditor() {
+        try {
+            // 初始化高级代码编辑器
+            this.codeEditor = new AdvancedCodeEditor('#advanced-code-editor', {
+                language: 'r',
+                theme: 'vs-dark',
+                fontSize: 14,
+                lineNumbers: true,
+                wordWrap: true,
+                minimap: false,
+                enableSymbolReplacement: false
+            });
+
+            // 设置默认示例代码 - 展示行号效果
+            this.codeEditor.setValue(`# R语言数据分析完整示例
+# 作者: R智能助手
+# 日期: ${new Date().toLocaleDateString('zh-CN')}
+
+# ==========================================
+# 1. 环境设置和数据加载
+# ==========================================
+
+# 加载必要的库
+library(ggplot2)   # 数据可视化
+library(dplyr)     # 数据处理
+library(tidyr)     # 数据整理
+
+# 使用内置的mtcars数据集
+data(mtcars)
+
+# ==========================================
+# 2. 数据探索和基本统计
+# ==========================================
+
+# 查看数据结构
+str(mtcars)
+head(mtcars, 10)
+
+# 基本统计描述
+summary(mtcars)
+
+# 计算相关系数
+cor(mtcars[, c("mpg", "wt", "hp", "qsec")])
+
+# ==========================================
+# 3. 数据可视化
+# ==========================================
+
+# 创建散点图：车重与油耗关系
+p1 <- ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(aes(color = factor(cyl), size = hp), alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(title = "汽车重量与燃油经济性关系",
+       subtitle = "基于mtcars数据集的分析",
+       x = "车重 (1000 lbs)",
+       y = "燃油经济性 (mpg)",
+       color = "汽缸数",
+       size = "马力") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+# 显示图表
+print(p1)
+
+# ==========================================
+# 4. 统计建模
+# ==========================================
+
+# 构建多元线性回归模型
+model <- lm(mpg ~ wt + hp + qsec + factor(cyl), data = mtcars)
+
+# 模型摘要
+summary(model)
+
+# 模型诊断
+par(mfrow = c(2, 2))
+plot(model)
+
+# ==========================================
+# 5. 结果解释和预测
+# ==========================================
+
+# 提取模型系数
+coefficients(model)
+
+# 进行预测
+new_data <- data.frame(
+  wt = c(3.0, 4.0),
+  hp = c(150, 200), 
+  qsec = c(18, 16),
+  cyl = c(6, 8)
+)
+
+# 预测结果
+predictions <- predict(model, new_data, interval = "confidence")
+print(predictions)
+
+# 完成分析
+cat("\\n分析完成！\\n")`);
+
+            // 监听编辑器事件
+            this.codeEditor.container.addEventListener('contentChange', (e) => {
+                this.updateStats();
+            });
+
+            this.codeEditor.container.addEventListener('selectionChange', (e) => {
+                this.handleSelectionChange();
+            });
+
+            this.updateStats();
+        } catch (error) {
+            console.error('初始化高级代码编辑器失败:', error);
+        }
     }
 
     init() {
         this.setupEventListeners();
-        this.updateStats();
     }
 
     setupEventListeners() {
-        // 代码输入统计
-        this.codeInput.addEventListener('input', () => {
-            this.updateStats();
-        });
-
         // 解释按钮
         this.explainBtn.addEventListener('click', () => {
             this.explainCode();
@@ -268,16 +732,15 @@ class CodeExplainer {
 
         // 工具按钮
         document.getElementById('clearCode').addEventListener('click', () => {
-            this.codeInput.value = '';
-            this.updateStats();
+            this.codeEditor.setValue('');
             this.hideResults();
+            this.clearSelection();
         });
 
         document.getElementById('pasteCode').addEventListener('click', async () => {
             try {
                 const text = await navigator.clipboard.readText();
-                this.codeInput.value = text;
-                this.updateStats();
+                this.codeEditor.setValue(text);
             } catch (err) {
                 RAssistant.showToast('粘贴失败，请手动粘贴', 'error');
             }
@@ -302,11 +765,64 @@ class CodeExplainer {
     }
 
     updateStats() {
-        const code = this.codeInput.value;
+        const code = this.codeEditor.getValue();
         const lines = code.split('\n').length;
         const chars = code.length;
         
-        document.getElementById('codeStats').textContent = `行数: ${lines} | 字符: ${chars}`;
+        const statsElement = document.getElementById('codeStats');
+        if (statsElement) {
+            statsElement.textContent = `行数: ${lines} | 字符: ${chars}`;
+        }
+    }
+
+    handleSelectionChange() {
+        const selectedLines = this.codeEditor.getSelectedLines();
+        
+        if (selectedLines.length === 0) {
+            this.clearSelectionDisplay();
+        } else {
+            this.updateSelectionDisplay(selectedLines);
+        }
+    }
+
+    updateSelectionDisplay(selectedLines) {
+        const selectedCode = this.getSelectedCode();
+        const charCount = selectedCode.length;
+        
+        // 更新选择信息显示
+        this.selectionDetails.textContent = `已选中 ${selectedLines.length} 行，${charCount} 个字符`;
+        this.selectedCodeInfo.style.display = 'block';
+        
+        // 更新解释按钮文本
+        this.explainBtn.innerHTML = '<i class="fas fa-code me-2"></i>解释选中代码';
+    }
+
+    clearSelectionDisplay() {
+        this.selectedCodeInfo.style.display = 'none';
+        this.explainBtn.innerHTML = '<i class="fas fa-brain me-2"></i>开始解释';
+    }
+
+    getSelectedCode() {
+        const selectedLines = this.codeEditor.getSelectedLines();
+        if (selectedLines.length === 0) {
+            return '';
+        }
+        
+        const lines = this.codeEditor.getValue().split('\n');
+        const selectedCodeLines = [];
+        
+        for (const lineNumber of selectedLines) {
+            if (lineNumber <= lines.length) {
+                selectedCodeLines.push(lines[lineNumber - 1]); // 行号从1开始，数组从0开始
+            }
+        }
+        
+        return selectedCodeLines.join('\n');
+    }
+
+    clearSelection() {
+        this.codeEditor.clearSelection();
+        this.clearSelectionDisplay();
     }
 
     loadExample() {
@@ -316,46 +832,54 @@ library(ggplot2)
 library(dplyr)
 
 # 使用内置的mtcars数据集
-data <- mtcars
+data(mtcars)
 
-# 数据探索
-head(data)
-summary(data)
+# 数据基本信息
+str(mtcars)
+summary(mtcars)
 
-# 数据处理
-data_clean <- data %>%
-  filter(mpg > 15) %>%
-  mutate(efficiency = ifelse(mpg > 20, "高效", "低效"))
-
-# 创建可视化
-ggplot(data_clean, aes(x = wt, y = mpg, color = efficiency)) +
-  geom_point(size = 3, alpha = 0.7) +
+# 创建散点图
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(aes(color = factor(cyl)), size = 3) +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "汽车重量与油耗关系",
-       x = "重量 (1000 lbs)",
+  labs(title = "车重与油耗关系",
+       x = "车重 (1000 lbs)",
        y = "油耗 (mpg)",
-       color = "燃油效率") +
+       color = "汽缸数") +
   theme_minimal()
 
-# 统计分析
-cor(data$wt, data$mpg)
-model <- lm(mpg ~ wt, data = data)
+# 简单的线性模型
+model <- lm(mpg ~ wt, data = mtcars)
 summary(model)`;
 
-        this.codeInput.value = example;
-        this.updateStats();
+        this.codeEditor.setValue(example);
     }
 
     async explainCode() {
-        const code = this.codeInput.value.trim();
+        const fullCode = this.codeEditor.getValue().trim();
         
-        if (!code) {
+        if (!fullCode) {
             RAssistant.showToast('请输入要解释的代码', 'warning');
             return;
         }
 
+        // 检查是否有选中的代码
+        let codeToAnalyze = fullCode;
+        let selectedCode = '';
+        let analysisMode = 'full';
+        const selectedLines = this.codeEditor.getSelectedLines();
+        
+        if (selectedLines.length > 0) {
+            selectedCode = this.getSelectedCode();
+            if (selectedCode.trim()) {
+                codeToAnalyze = selectedCode;
+                analysisMode = 'selected';
+                RAssistant.showToast(`正在分析选中的 ${selectedLines.length} 行代码`, 'info');
+            }
+        }
+
         // 验证代码
-        const validation = RAssistant.validateRCode(code);
+        const validation = RAssistant.validateRCode(codeToAnalyze);
         if (!validation.isValid) {
             const confirmResult = confirm(
                 `代码可能有以下问题：\n${validation.errors.join('\n')}\n\n是否继续解释？`
@@ -366,22 +890,37 @@ summary(model)`;
         this.explainBtn.disabled = true;
         this.explainBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>解释中...';
         
-        RAssistant.showLoading('AI正在分析您的代码...');
+        const loadingMessage = analysisMode === 'selected' 
+            ? 'AI正在分析您选中的代码...' 
+            : 'AI正在分析您的代码...';
+        RAssistant.showLoading(loadingMessage);
 
         try {
-            const result = await RAssistant.makeApiRequest('/explain/', {
-                code: code
-            });
+            const requestData = {
+                code: codeToAnalyze,
+                analysis_mode: analysisMode
+            };
+            
+            // 如果是选中模式，提供完整代码作为上下文
+            if (analysisMode === 'selected') {
+                requestData.full_code = fullCode;
+                requestData.selected_lines = selectedLines;
+            }
+
+            const result = await RAssistant.makeApiRequest('/explain/', requestData);
 
             if (result.success) {
-                this.showExplanation(result.explanation, result.processing_time);
+                this.showExplanation(result.explanation, result.processing_time, analysisMode);
                 
                 // 如果开启了代码分析
                 if (document.getElementById('includeAnalysis').checked) {
-                    await this.analyzeCode(code);
+                    await this.analyzeCode(codeToAnalyze, analysisMode);
                 }
                 
-                RAssistant.showToast('代码解释完成！', 'success');
+                const successMessage = analysisMode === 'selected' 
+                    ? '选中代码解释完成！' 
+                    : '代码解释完成！';
+                RAssistant.showToast(successMessage, 'success');
             } else {
                 throw new Error(result.error || '解释失败');
             }
@@ -395,35 +934,25 @@ summary(model)`;
         }
     }
 
-    async analyzeCode(code) {
+    async analyzeCode(code, analysisMode = 'full') {
         try {
-            const result = await RAssistant.makeApiRequest('/analyze/', {
+            const requestData = {
                 code: code,
-                type: 'quality'
-            });
+                type: 'quality',
+                analysis_mode: analysisMode
+            };
+
+            const result = await RAssistant.makeApiRequest('/analyze/', requestData);
 
             if (result.success) {
-                this.showAnalysis(result.result);
+                this.showAnalysis(result.result, analysisMode);
             }
         } catch (error) {
             console.error('分析失败:', error);
         }
     }
 
-    showExplanation(explanation, processingTime) {
-        this.emptyState.style.display = 'none';
-        this.explanationResult.classList.remove('d-none');
-        
-        document.getElementById('explanationText').innerHTML = 
-            RAssistantUtils.parseMarkdown(explanation);
-        document.getElementById('processingTime').textContent = 
-            `处理时间: ${RAssistant.formatTime(processingTime)}`;
-        
-        // 高亮代码块
-        RAssistant.highlightCode();
-    }
-
-    showAnalysis(analysisResult) {
+    showAnalysis(analysisResult, analysisMode = 'full') {
         const staticAnalysis = analysisResult.static_analysis;
         const aiAnalysis = analysisResult.ai_analysis;
         
@@ -436,16 +965,44 @@ summary(model)`;
                 staticAnalysis.metrics?.lines_of_code || '--';
         }
         
+        // 添加分析模式标识
+        let modeIndicator = '';
+        if (analysisMode === 'selected') {
+            modeIndicator = '<div class="alert alert-info mb-3"><i class="fas fa-code me-2"></i>以下是选中代码的分析结果</div>';
+        }
+        
         document.getElementById('analysisText').innerHTML = 
-            RAssistantUtils.parseMarkdown(aiAnalysis);
+            modeIndicator + RAssistantUtils.parseMarkdown(aiAnalysis);
         
         this.analysisSection.style.display = 'block';
+        
+        // 高亮代码块
+        RAssistant.highlightCode();
         
         // 滚动到分析结果
         this.analysisSection.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'start' 
         });
+    }
+
+    showExplanation(explanation, processingTime, analysisMode = 'full') {
+        this.emptyState.style.display = 'none';
+        this.explanationResult.classList.remove('d-none');
+        
+        // 添加分析模式标识
+        let modeIndicator = '';
+        if (analysisMode === 'selected') {
+            modeIndicator = '<div class="alert alert-info mb-3"><i class="fas fa-code me-2"></i>当前分析的是选中的代码片段</div>';
+        }
+        
+        document.getElementById('explanationText').innerHTML = 
+            modeIndicator + RAssistantUtils.parseMarkdown(explanation);
+        document.getElementById('processingTime').textContent = 
+            `处理时间: ${RAssistant.formatTime(processingTime)}`;
+        
+        // 高亮代码块
+        RAssistant.highlightCode();
     }
 
     hideResults() {
@@ -465,7 +1022,7 @@ summary(model)`;
     }
 
     saveResult() {
-        const code = this.codeInput.value;
+        const code = this.codeEditor.getValue();
         const explanation = document.getElementById('explanationText').textContent;
         const timestamp = new Date().toLocaleString();
         
@@ -486,7 +1043,7 @@ Generated by R语言智能助手`;
     }
 
     askQuestion() {
-        const code = this.codeInput.value;
+        const code = this.codeEditor.getValue();
         const explanation = document.getElementById('explanationText').textContent;
         
         // 构造追问链接，带上当前代码和解释作为上下文

@@ -464,13 +464,29 @@ window.RAssistantUtils = {
         return div.innerHTML;
     },
 
-    // 解析Markdown（简单实现）
+    // 解析Markdown（使用marked.js）
     parseMarkdown: function(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/\n/g, '<br>');
+        if (typeof marked !== 'undefined') {
+            // 配置marked选项
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    if (Prism.languages[lang]) {
+                        return Prism.highlight(code, Prism.languages[lang], lang);
+                    }
+                    return code;
+                },
+                breaks: true,
+                gfm: true
+            });
+            return marked.parse(text);
+        } else {
+            // 降级到简单实现
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+        }
     },
 
     // 下载文件

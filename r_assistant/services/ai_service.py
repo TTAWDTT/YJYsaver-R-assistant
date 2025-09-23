@@ -63,7 +63,17 @@ class DeepSeekService:
             )
             processing_time = time.time() - start_time
             
-            response.raise_for_status()
+            # 检查响应状态码
+            if response.status_code == 401:
+                logger.error("DeepSeek API authentication failed - invalid or expired token")
+                raise AIServiceError("API认证失败：令牌无效或已过期，请检查DEEPSEEK_API_KEY配置")
+            elif response.status_code == 429:
+                logger.error("DeepSeek API rate limit exceeded")
+                raise AIServiceError("API调用频率超限，请稍后重试")
+            elif response.status_code != 200:
+                logger.error("DeepSeek API returned status code: %d", response.status_code)
+                raise AIServiceError(f"API请求失败，状态码: {response.status_code}")
+            
             result = response.json()
             
             logger.info("DeepSeek API call successful. Time: %.2fs", processing_time)

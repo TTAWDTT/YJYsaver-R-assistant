@@ -1,6 +1,99 @@
 {% extends 'core/base.html' %}
+{% load markdown_filters %}
 
 {% block title %}智能对话 - R语言智能助手{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Markdown 样式 */
+.markdown-content {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    color: #f8fafc;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.3rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.2rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.2rem;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 0.1rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.1rem;
+    color: #a0aec0;
+}
+
+.markdown-content p {
+    margin-bottom: 0.8rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 0.8rem;
+    padding-left: 1.2rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.2rem;
+}
+
+.markdown-content code {
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fbb6ce;
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.2rem;
+    font-size: 0.85rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.markdown-content pre {
+    background-color: rgba(26, 32, 44, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.4rem;
+    padding: 0.8rem;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+}
+
+.markdown-content pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 0.8rem;
+}
+
+.markdown-content strong {
+    color: #f7fafc;
+    font-weight: 600;
+}
+
+.markdown-content em {
+    color: #cbd5e0;
+    font-style: italic;
+}
+
+.chat-message.assistant .markdown-content {
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -41,7 +134,11 @@
                                     <small class="text-muted ms-2">{{ message.timestamp|date:"H:i" }}</small>
                                 </div>
                                 <div class="message-text text-light">
-                                    {{ message.content|linebreaks }}
+                                    {% if message.role == 'assistant' %}
+                                        {{ message.content|markdown_safe }}
+                                    {% else %}
+                                        {{ message.content|linebreaks }}
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

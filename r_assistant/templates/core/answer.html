@@ -1,6 +1,165 @@
 {% extends 'core/base.html' %}
+{% load markdown_filters %}
 
 {% block title %}作业求解 - R语言智能助手{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Markdown 样式 */
+.markdown-content {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    color: #f8fafc;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.4rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.3rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.25rem;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 0.2rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.15rem;
+    color: #a0aec0;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25rem;
+}
+
+.markdown-content code {
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fbb6ce;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.markdown-content pre {
+    background-color: rgba(26, 32, 44, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.markdown-content pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+.markdown-content strong {
+    color: #f7fafc;
+    font-weight: 600;
+}
+
+.markdown-content em {
+    color: #cbd5e0;
+    font-style: italic;
+}
+
+.solution-content .markdown-content {
+    font-size: 0.95rem;
+}
+
+/* 文件上传样式 */
+.file-upload-container {
+    position: relative;
+}
+
+.file-upload-container input[type="file"] {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.file-upload-container input[type="file"]:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.file-upload-container input[type="file"]:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.file-item .file-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.file-item .file-icon {
+    margin-right: 0.5rem;
+    color: #fbbf24;
+}
+
+.file-item .file-size {
+    margin-left: auto;
+    margin-right: 0.5rem;
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+.file-item .remove-file {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.file-item .remove-file:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -27,13 +186,13 @@
                     输入作业题目
                 </h4>
                 
-                <form method="post" action="{% url 'core:answer' %}">
+                <form method="post" action="{% url 'core:answer' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="mb-3">
                         <textarea 
                             class="form-control" 
                             name="problem" 
-                            rows="10" 
+                            rows="8" 
                             placeholder="请在此处输入您的R语言作业题目...
 
 示例：
@@ -41,6 +200,33 @@
 2. 编写一个函数计算向量的标准差
 3. 从CSV文件读取数据并进行基本的统计分析"
                             required>{{ request.POST.problem|default_if_none:"" }}</textarea>
+                    </div>
+                    
+                    <!-- 文件上传区域 -->
+                    <div class="mb-3">
+                        <label class="form-label text-light">
+                            <i class="fas fa-paperclip me-2"></i>上传相关文件（可选）
+                        </label>
+                        <div class="file-upload-container">
+                            <input 
+                                type="file" 
+                                class="form-control" 
+                                name="uploaded_files" 
+                                multiple 
+                                accept=".csv,.txt,.xlsx,.xls,.r,.rmd,.json,.xml,.py,.js,.html,.css"
+                                id="fileInput">
+                            <div class="form-text text-muted">
+                                支持格式：CSV, TXT, Excel, R脚本, JSON, XML等。最多上传5个文件，单文件最大10MB。
+                            </div>
+                        </div>
+                        
+                        <!-- 文件预览区域 -->
+                        <div id="filePreview" class="mt-2" style="display: none;">
+                            <div class="border rounded-3 p-2 bg-dark bg-opacity-50">
+                                <small class="text-light">已选择的文件：</small>
+                                <div id="fileList" class="mt-1"></div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center">
@@ -68,11 +254,34 @@
                 </h4>
                 
                 {% if solutions %}
+                    {% if uploaded_files %}
+                    <div class="mb-3">
+                        <h6 class="text-info">
+                            <i class="fas fa-paperclip me-2"></i>
+                            已分析文件 ({{ uploaded_files|length }})
+                        </h6>
+                        <div class="uploaded-files-list">
+                            {% for file in uploaded_files %}
+                            <div class="file-item mb-1">
+                                <div class="file-info">
+                                    <i class="fas fa-file-alt file-icon me-2"></i>
+                                    <span class="file-name">{{ file.original_filename }}</span>
+                                    <span class="file-size ms-auto">{{ file.file_size|filesizeformat }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <hr class="border-secondary">
+                    </div>
+                    {% endif %}
+                    
                     {% for solution in solutions %}
-                    <div class="mb-4">
+                    <div class="mb-4 solution-content">
                         <h5 class="text-primary">{{ solution.title }}</h5>
                         <pre><code class="language-r">{{ solution.code }}</code></pre>
-                        <p class="text-light">{{ solution.explanation }}</p>
+                        <div class="explanation-content">
+                            {{ solution.explanation|markdown_safe }}
+                        </div>
                         {% if solution.filename %}
                         <small class="text-muted">建议文件名: {{ solution.filename }}</small>
                         {% endif %}
@@ -123,4 +332,109 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileList = document.getElementById('fileList');
+    let selectedFiles = [];
+
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        
+        // 验证文件数量
+        if (files.length > 5) {
+            alert('最多只能上传5个文件');
+            e.target.value = '';
+            return;
+        }
+        
+        // 验证文件大小
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        for (let file of files) {
+            if (file.size > maxSize) {
+                alert(`文件 "${file.name}" 大小超过10MB，请选择较小的文件`);
+                e.target.value = '';
+                return;
+            }
+        }
+        
+        selectedFiles = files;
+        updateFilePreview();
+    });
+
+    function updateFilePreview() {
+        if (selectedFiles.length === 0) {
+            filePreview.style.display = 'none';
+            return;
+        }
+        
+        filePreview.style.display = 'block';
+        fileList.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            const fileIcon = getFileIcon(file.name);
+            const fileSize = formatFileSize(file.size);
+            
+            fileItem.innerHTML = `
+                <div class="file-info">
+                    <i class="${fileIcon} file-icon"></i>
+                    <span class="file-name">${file.name}</span>
+                </div>
+                <span class="file-size">${fileSize}</span>
+                <button type="button" class="remove-file" onclick="removeFile(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            fileList.appendChild(fileItem);
+        });
+    }
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'csv': 'fas fa-file-csv',
+            'txt': 'fas fa-file-alt',
+            'xlsx': 'fas fa-file-excel',
+            'xls': 'fas fa-file-excel',
+            'r': 'fas fa-file-code',
+            'rmd': 'fas fa-file-code',
+            'json': 'fas fa-file-code',
+            'xml': 'fas fa-file-code',
+            'py': 'fas fa-file-code',
+            'js': 'fas fa-file-code',
+            'html': 'fas fa-file-code',
+            'css': 'fas fa-file-code'
+        };
+        return iconMap[ext] || 'fas fa-file';
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 全局函数，供HTML调用
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        
+        // 更新文件输入
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+        
+        updateFilePreview();
+    };
+});
+</script>
 {% endblock %}

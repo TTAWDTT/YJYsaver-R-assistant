@@ -94,6 +94,47 @@ class UserSession(models.Model):
         return f"Session {self.session_id[:8]}... - {self.last_activity.strftime('%Y-%m-%d %H:%M')}"
 
 
+class UploadedFile(models.Model):
+    """上传文件模型"""
+    FILE_TYPES = [
+        ('csv', 'CSV文件'),
+        ('txt', '文本文件'),
+        ('xlsx', 'Excel文件'),
+        ('r', 'R脚本'),
+        ('rmd', 'R Markdown'),
+        ('json', 'JSON文件'),
+        ('xml', 'XML文件'),
+        ('other', '其他'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    request_log = models.ForeignKey(RequestLog, on_delete=models.CASCADE, related_name='uploaded_files')
+    original_filename = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=20, choices=FILE_TYPES)
+    file_size = models.BigIntegerField()  # 文件大小（字节）
+    file_content = models.TextField()  # 存储文件内容
+    file_path = models.CharField(max_length=500, null=True, blank=True)  # 文件路径（如果保存到磁盘）
+    mime_type = models.CharField(max_length=100, null=True, blank=True)
+    encoding = models.CharField(max_length=50, default='utf-8')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        db_table = 'uploaded_files'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.original_filename} ({self.get_file_type_display()})"
+    
+    def get_file_extension(self):
+        """获取文件扩展名"""
+        return self.original_filename.split('.')[-1].lower() if '.' in self.original_filename else ''
+    
+    def is_text_file(self):
+        """判断是否为文本文件"""
+        text_extensions = ['txt', 'csv', 'r', 'rmd', 'json', 'xml', 'py', 'js', 'html', 'css']
+        return self.get_file_extension() in text_extensions
+
+
 class PerformanceMetric(models.Model):
     """性能指标模型"""
     METRIC_TYPES = [

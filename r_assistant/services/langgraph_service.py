@@ -29,8 +29,9 @@ class LangGraphService:
         
     def _check_api_availability(self):
         """检查API是否可用"""
-        if not self.api_key_available:
-            logger.warning("DEEPSEEK_API_KEY未配置，使用演示模式")
+        api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
+        if not api_key or api_key.startswith('sk-请替换') or api_key == 'sk-placeholder-key-change-this':
+            logger.warning("DEEPSEEK_API_KEY未正确配置，使用演示模式")
             return False
         return True
         
@@ -70,14 +71,20 @@ class LangGraphService:
             })
         return formatted_solutions
     
-    def explain_code(self, code: str, session_id: str = None) -> Dict[str, Any]:
-        """代码解释服务 - 使用LangGraph工作流"""
+    def explain_code(self, code: str, session_id: str = None, mode: str = 'full') -> Dict[str, Any]:
+        """代码解释服务 - 使用LangGraph工作流
+        
+        Args:
+            code: 要解释的代码
+            session_id: 会话ID
+            mode: 分析模式 ('full', 'selected')
+        """
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
             
             # 检查API可用性
             if not self._check_api_availability():
-                return self._create_demo_response("explain", code)
+                return self._create_demo_response("explain", code, mode)
             
             # 执行工作流
             result = self._run_async(
@@ -94,6 +101,7 @@ class LangGraphService:
                 "processing_time": result.get("processing_time", 0),
                 "usage": {"total_tokens": result.get("total_tokens", 0)},
                 "success": result.get("status") == "success",
+                "analysis_mode": mode,
                 "metadata": {
                     "workflow_steps": result.get("processing_steps", []),
                     "code_analysis": result.get("code_analysis"),
@@ -106,27 +114,46 @@ class LangGraphService:
             if not response["success"]:
                 raise AIServiceError(f"代码解释失败: {'; '.join(result.get('errors', []))}")
             
-            logger.info(f"代码解释完成，会话ID: {session_id}")
+            logger.info(f"代码解释完成（模式：{mode}），会话ID: {session_id}")
             return response
             
         except Exception as e:
             logger.error(f"代码解释服务失败: {str(e)}")
             raise AIServiceError(f"代码解释失败: {str(e)}")
     
-    def solve_problem(self, problem: str, session_id: str = None) -> Dict[str, Any]:
-        """问题求解服务 - 使用LangGraph工作流"""
+    def solve_problem(self, problem: str, session_id: str = None, uploaded_files: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """问题求解服务 - 使用LangGraph工作流，支持文件上传"""
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
             
             # 检查API可用性
             if not self._check_api_availability():
-                return self._create_demo_response("solve", problem)
+                return self._create_demo_response("solve", problem, uploaded_files)
+            
+            # 准备文件内容描述
+            file_context = ""
+            if uploaded_files:
+                file_context = "\n\n相关文件内容：\n"
+                for file_info in uploaded_files:
+                    file_context += f"\n--- 文件: {file_info['filename']} (类型: {file_info['type']}, 大小: {file_info['size']} 字节) ---\n"
+                    if file_info['content'].startswith('[二进制文件'):
+                        file_context += file_info['content'] + "\n"
+                    else:
+                        # 限制文件内容长度，避免过长
+                        content = file_info['content']
+                        if len(content) > 5000:
+                            content = content[:5000] + "\n... (内容被截断，文件过长)"
+                        file_context += content + "\n"
+                file_context += "\n请基于以上文件内容来解决问题。"
+            
+            # 组合问题描述和文件内容
+            enhanced_problem = problem + file_context
             
             # 执行工作流
             result = self._run_async(
                 self.workflow_engine.execute_workflow(
                     request_type="answer",
-                    user_input=problem,
+                    user_input=enhanced_problem,
                     session_id=session_id
                 )
             )
@@ -145,14 +172,15 @@ class LangGraphService:
                     "workflow_steps": result.get("processing_steps", []),
                     "problem_type": result.get("problem_type"),
                     "warnings": result.get("warnings", []),
-                    "errors": result.get("errors", [])
+                    "errors": result.get("errors", []),
+                    "uploaded_files_count": len(uploaded_files) if uploaded_files else 0
                 }
             }
             
             if not response["success"]:
                 raise AIServiceError(f"问题求解失败: {'; '.join(result.get('errors', []))}")
             
-            logger.info(f"问题求解完成，会话ID: {session_id}，生成{len(solutions)}个解决方案")
+            logger.info(f"问题求解完成，会话ID: {session_id}，生成{len(solutions)}个解决方案，包含{len(uploaded_files) if uploaded_files else 0}个文件")
             return response
             
         except Exception as e:
@@ -325,26 +353,56 @@ test_that("异常处理测试", {{
             logger.error(f"代码优化失败: {str(e)}")
             raise AIServiceError(f"代码优化失败: {str(e)}")
     
-    def _create_demo_response(self, request_type: str, user_input: str) -> Dict[str, Any]:
+    def _create_demo_response(self, request_type: str, user_input: str, mode_or_files = 'full') -> Dict[str, Any]:
         """创建演示响应（当API密钥不可用时）"""
+        # 处理参数兼容性
+        if isinstance(mode_or_files, list):
+            uploaded_files = mode_or_files
+            mode = 'full'
+            file_info = f"\n\n📎 **包含{len(uploaded_files)}个上传文件：**\n"
+            for file in uploaded_files:
+                file_info += f"- {file['filename']} ({file['type']}, {file['size']} 字节)\n"
+        else:
+            mode = mode_or_files
+            uploaded_files = None
+            file_info = ""
+        
         demo_responses = {
-            "chat": f"你好！我是R语言智能助手。\n\n你说：{user_input}\n\n这是一个演示回复。要启用完整的AI功能，请在.env文件中配置DEEPSEEK_API_KEY。\n\n我可以帮助你：\n- 解释R代码\n- 解决编程问题\n- 提供学习建议\n- 数据分析指导",
-            "explain": f"代码解释功能演示：\n\n你提交的代码：\n{user_input}\n\n这是演示解释。配置API密钥后，我将为你提供详细的代码分析，包括：\n- 逐行代码解释\n- 函数功能说明\n- 最佳实践建议\n- 可能的优化方案",
-            "solve": f"问题解决功能演示：\n\n你的问题：{user_input}\n\n这是演示解决方案。配置API密钥后，我将提供：\n- 多种解决方案\n- 详细代码实现\n- 最佳实践指导\n- 相关包推荐",
-            "analyze": f"代码分析功能演示：\n\n你提交的代码：\n{user_input}\n\n这是演示分析。配置API密钥后，我将提供：\n- 代码质量评分\n- 性能分析建议\n- 代码规范检查\n- 优化建议"
+            "chat": f"🤖 **R语言智能助手演示模式**\n\n你好！我是R语言智能助手。\n\n**你说：** {user_input}\n\n---\n\n⚠️ **当前处于演示模式**\n\n要启用完整的AI功能，请按以下步骤配置API密钥：\n\n1. 访问 https://platform.deepseek.com 注册账号\n2. 获取您的API Key\n3. 在项目根目录的 `.env` 文件中设置：\n   ```\n   DEEPSEEK_API_KEY=你的API密钥\n   ```\n4. 重启服务器\n\n**配置完成后，我可以帮助你：**\n- 📝 解释R代码\n- 🔧 解决编程问题\n- 📚 提供学习建议\n- 📊 数据分析指导",
+            
+            "explain": f"📝 **代码解释功能演示{' - 选中代码分析' if mode == 'selected' else ''}**\n\n**你提交的代码：**\n```r\n{user_input}\n```\n\n---\n\n🎯 **演示解释：**\n\n这是一个演示响应。配置API密钥后，我将为你提供详细的代码分析，包括：\n\n- 📖 逐行代码解释\n- ⚙️ 函数功能说明  \n- ✨ 最佳实践建议\n- 🚀 性能优化方案\n\n{f'**当前选中代码分析模式** - 我会重点关注你选中的代码片段并结合完整上下文进行分析。' if mode == 'selected' else ''}\n\n---\n\n⚠️ **要启用完整功能，请配置DeepSeek API密钥：**\n\n1. 访问 https://platform.deepseek.com\n2. 在 `.env` 文件中设置 `DEEPSEEK_API_KEY`\n3. 重启服务器",
+            
+            "solve": f"🔧 **问题解决功能演示**\n\n**你的问题：** {user_input}{file_info}\n\n---\n\n🎯 **演示解决方案：**\n\n这是一个演示响应。配置API密钥后，我将提供：\n\n- 🔄 多种解决方案\n- 💻 详细代码实现\n- 📋 最佳实践指导\n- 📦 相关包推荐\n{f'- 📎 基于上传文件的个性化解决方案' if uploaded_files else ''}\n\n---\n\n⚠️ **配置API密钥以获得完整功能**",
+            
+            "analyze": f"📊 **代码分析功能演示**\n\n**你提交的代码：**\n```r\n{user_input}\n```\n\n---\n\n🎯 **演示分析：**\n\n配置API密钥后，我将提供：\n\n- 📈 代码质量评分\n- ⚡ 性能分析建议\n- 📏 代码规范检查\n- 🔧 优化建议\n\n---\n\n⚠️ **配置API密钥以获得完整功能**"
         }
         
-        return {
+        response = {
             "content": demo_responses.get(request_type, f"演示响应：{user_input}"),
             "processing_time": 0.1,
             "usage": {"total_tokens": 0},
             "success": True,
+            "analysis_mode": mode,
             "metadata": {
                 "demo_mode": True,
                 "api_key_required": True,
-                "message": "请配置DEEPSEEK_API_KEY以启用完整功能"
+                "message": "请配置DEEPSEEK_API_KEY以启用完整功能",
+                "uploaded_files_count": len(uploaded_files) if uploaded_files else 0
             }
         }
+        
+        # 为求解问题添加演示解决方案
+        if request_type == "solve":
+            response["solutions"] = [
+                {
+                    "title": "演示解决方案 1",
+                    "code": "# 这是一个演示代码\n# 配置API密钥后将提供真实解决方案\nprint('Hello, R World!')",
+                    "explanation": "这是演示代码说明。配置API密钥后将提供详细的问题分析和多种解决方案。",
+                    "filename": "demo_solution.R"
+                }
+            ]
+        
+        return response
 
 
 # 创建服务工厂

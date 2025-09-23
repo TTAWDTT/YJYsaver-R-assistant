@@ -181,11 +181,34 @@ class AnswerView(TemplateView):
     def post(self, request, *args, **kwargs):
         try:
             problem = request.POST.get('problem', '').strip()
+            uploaded_files = request.FILES.getlist('uploaded_files')
             
             if not problem:
                 context = self.get_context_data()
                 context['error_message'] = "请输入要求解的问题"
                 return self.render_to_response(context)
+            
+            # 验证上传文件
+            if len(uploaded_files) > 5:
+                context = self.get_context_data()
+                context['error_message'] = "最多只能上传5个文件"
+                return self.render_to_response(context)
+            
+            # 验证文件大小和类型
+            max_file_size = 10 * 1024 * 1024  # 10MB
+            allowed_extensions = ['csv', 'txt', 'xlsx', 'xls', 'r', 'rmd', 'json', 'xml', 'py', 'js', 'html', 'css']
+            
+            for uploaded_file in uploaded_files:
+                if uploaded_file.size > max_file_size:
+                    context = self.get_context_data()
+                    context['error_message'] = f"文件 '{uploaded_file.name}' 大小超过10MB"
+                    return self.render_to_response(context)
+                
+                file_ext = uploaded_file.name.split('.')[-1].lower() if '.' in uploaded_file.name else ''
+                if file_ext not in allowed_extensions:
+                    context = self.get_context_data()
+                    context['error_message'] = f"不支持的文件类型：{file_ext}"
+                    return self.render_to_response(context)
             
             # 获取会话ID
             session_id = get_session_id(request)
@@ -202,9 +225,45 @@ class AnswerView(TemplateView):
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             
+            # 处理上传的文件
+            file_contents = []
+            for uploaded_file in uploaded_files:
+                try:
+                    # 读取文件内容
+                    if uploaded_file.content_type.startswith('text/') or uploaded_file.name.endswith(('.csv', '.txt', '.r', '.rmd', '.json', '.xml', '.py', '.js', '.html', '.css')):
+                        content = uploaded_file.read().decode('utf-8')
+                    else:
+                        content = f"[二进制文件: {uploaded_file.name}, 大小: {uploaded_file.size} 字节]"
+                    
+                    # 保存文件信息到数据库
+                    file_type = self._get_file_type(uploaded_file.name)
+                    from .models import UploadedFile
+                    UploadedFile.objects.create(
+                        request_log=request_log,
+                        original_filename=uploaded_file.name,
+                        file_type=file_type,
+                        file_size=uploaded_file.size,
+                        file_content=content,
+                        mime_type=uploaded_file.content_type,
+                        encoding='utf-8'
+                    )
+                    
+                    file_contents.append({
+                        'filename': uploaded_file.name,
+                        'content': content,
+                        'size': uploaded_file.size,
+                        'type': file_type
+                    })
+                    
+                except Exception as e:
+                    logger.error(f"处理上传文件 {uploaded_file.name} 时出错: {str(e)}")
+                    context = self.get_context_data()
+                    context['error_message'] = f"处理文件 '{uploaded_file.name}' 时出错"
+                    return self.render_to_response(context)
+            
             try:
-                # 使用LangGraph服务进行问题求解
-                result = langgraph_service.solve_problem(problem, session_id)
+                # 使用LangGraph服务进行问题求解，包含文件内容
+                result = langgraph_service.solve_problem(problem, session_id, uploaded_files=file_contents)
                 
                 # 计算响应时间
                 processing_time = result.get('processing_time', 0)
@@ -236,7 +295,8 @@ class AnswerView(TemplateView):
                     'solutions': solutions,
                     'processing_time': processing_time,
                     'workflow_metadata': result.get('metadata', {}),
-                    'problem_type': result.get('metadata', {}).get('problem_type')
+                    'problem_type': result.get('metadata', {}).get('problem_type'),
+                    'uploaded_files': request_log.uploaded_files.all() if uploaded_files else None
                 })
                 
                 return self.render_to_response(context)
@@ -259,6 +319,21 @@ class AnswerView(TemplateView):
             context = self.get_context_data()
             context['error_message'] = "系统错误，请稍后重试"
             return self.render_to_response(context)
+    
+    def _get_file_type(self, filename):
+        """根据文件名确定文件类型"""
+        ext = filename.split('.')[-1].lower() if '.' in filename else ''
+        type_mapping = {
+            'csv': 'csv',
+            'txt': 'txt',
+            'xlsx': 'xlsx',
+            'xls': 'xlsx',
+            'r': 'r',
+            'rmd': 'rmd',
+            'json': 'json',
+            'xml': 'xml',
+        }
+        return type_mapping.get(ext, 'other')
 
 
 class TalkView(TemplateView):
@@ -314,8 +389,10 @@ class TalkView(TemplateView):
                 conversation_history = list(
                     ConversationHistory.objects.filter(
                         session_id=session_id
-                    ).order_by('timestamp').values('role', 'content')[-10:]  # 最近10条
+                    ).order_by('-timestamp').values('role', 'content')[:10]  # 最近10条
                 )
+                # 反转顺序，使最早的消息在前面
+                conversation_history.reverse()
                 
                 # 使用LangGraph服务进行智能对话
                 result = langgraph_service.chat(message, conversation_history, session_id)

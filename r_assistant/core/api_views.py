@@ -352,6 +352,9 @@ class ExplainAPIView(BaseAPIView):
         try:
             data = json.loads(request.body)
             code = data.get('code', '').strip()
+            analysis_mode = data.get('analysis_mode', 'full')
+            full_code = data.get('full_code', '')
+            selected_lines = data.get('selected_lines', [])
             
             if not code:
                 return JsonResponse({
@@ -360,12 +363,21 @@ class ExplainAPIView(BaseAPIView):
                 }, status=400)
             
             # 记录请求日志
-            request_log = self._create_request_log(request, 'explain', code)
+            log_content = code
+            if analysis_mode == 'selected':
+                log_content = f"[选中代码分析] 行号: {selected_lines}\n{code}"
+            
+            request_log = self._create_request_log(request, 'explain', log_content)
             session_id = self._get_session_id(request)
             
             try:
                 # 使用LangGraph服务解释代码
-                result = langgraph_service.explain_code(code, session_id)
+                if analysis_mode == 'selected' and full_code:
+                    # 为选中代码提供完整上下文
+                    context_info = f"完整代码上下文：\n{full_code}\n\n需要解释的选中部分（第{min(selected_lines)}-{max(selected_lines)}行）：\n{code}"
+                    result = langgraph_service.explain_code(context_info, session_id, mode='selected')
+                else:
+                    result = langgraph_service.explain_code(code, session_id, mode=analysis_mode)
                 
                 # 更新请求日志
                 self._update_request_log(
@@ -380,7 +392,8 @@ class ExplainAPIView(BaseAPIView):
                     'success': True,
                     'explanation': result.get('content', ''),
                     'processing_time': result.get('processing_time', 0),
-                    'metadata': result.get('metadata', {})
+                    'metadata': result.get('metadata', {}),
+                    'analysis_mode': analysis_mode
                 })
                 
             except AIServiceError as e:

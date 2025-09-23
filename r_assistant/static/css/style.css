@@ -545,3 +545,143 @@ code[class*="language-"] {
 .bg-gradient-warning {
     background: var(--warning-gradient);
 }
+
+/* Monaco Editor VS Code 风格样式 */
+.monaco-editor {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+/* 行号区域样式 - 模仿VS Code */
+.monaco-editor .margin {
+    background-color: #1e1e1e !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.monaco-editor .line-numbers {
+    color: #858585 !important;
+    font-size: 13px !important;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+    font-weight: normal !important;
+    line-height: 18px !important;
+    text-align: right !important;
+    padding: 0 8px 0 4px !important;
+    min-width: 35px !important;
+    margin: 0 !important;
+}
+
+/* 当前行行号高亮 */
+.monaco-editor .current-line ~ .margin .line-numbers {
+    color: #c6c6c6 !important;
+    font-weight: normal !important;
+}
+
+/* 行号悬停效果 */
+.monaco-editor .margin:hover .line-numbers {
+    color: #c6c6c6 !important;
+}
+
+/* 编辑器主体样式 */
+.monaco-editor .monaco-editor-background {
+    background-color: #1e1e1e !important;
+}
+
+.monaco-editor .monaco-editor-text {
+    color: #d4d4d4 !important;
+}
+
+/* 当前行高亮 */
+.monaco-editor .current-line {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 选中行样式 */
+.monaco-editor .selected-text {
+    background-color: rgba(173, 214, 255, 0.15) !important;
+}
+
+/* 光标样式 */
+.monaco-editor .cursor {
+    background-color: #c6c6c6 !important;
+    border-left: 2px solid #c6c6c6 !important;
+}
+
+/* 折叠控件样式 */
+.monaco-editor .folding-decoration {
+    color: #c5c5c5 !important;
+}
+
+.monaco-editor .folding-decoration:hover {
+    background-color: rgba(90, 93, 94, 0.5) !important;
+}
+
+/* 缩进引导线 */
+.monaco-editor .lines-content .cigr {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.monaco-editor .lines-content .cigra {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 滚动条样式 */
+.monaco-editor .monaco-scrollable-element > .scrollbar {
+    background-color: rgba(121, 121, 121, 0.4) !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar:hover {
+    background-color: rgba(100, 100, 100, 0.7) !important;
+}
+
+/* 代码编辑器容器 */
+.advanced-code-editor {
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #1e1e1e;
+    min-height: 300px;
+    max-height: 600px;
+}
+
+/* 确保Monaco编辑器填满容器 */
+.advanced-code-editor .monaco-editor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 备用编辑器的行号样式 - 优化版 */
+.fallback-code-editor .line-numbers {
+    background-color: #1e1e1e;
+    color: #858585;
+    font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 18px;
+    text-align: right;
+    padding: 10px 8px 10px 4px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    user-select: none;
+    min-width: 35px;
+    white-space: pre-line;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.fallback-code-editor .line-numbers div {
+    height: 18px;
+    line-height: 18px;
+    cursor: pointer;
+    padding: 0 4px 0 0;
+    margin: 0;
+    text-align: right;
+    white-space: pre;
+}
+
+.fallback-code-editor .line-numbers div:hover {
+    color: #c6c6c6;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.fallback-code-editor .line-numbers div.selected {
+    background-color: rgba(0, 122, 204, 0.3);
+    color: #ffffff;
+}
