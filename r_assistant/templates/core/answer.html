@@ -1,0 +1,126 @@
+{% extends 'core/base.html' %}
+
+{% block title %}作业求解 - R语言智能助手{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-white mb-3">
+                    <i class="fas fa-lightbulb text-warning me-3"></i>
+                    <span class="text-gradient">作业求解</span>
+                </h1>
+                <p class="lead text-light">
+                    输入您的R语言作业题目，AI将生成详细的解决方案
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- 题目输入区域 -->
+        <div class="col-lg-6">
+            <div class="glass-effect rounded-4 p-4 h-100">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-edit text-warning me-2"></i>
+                    输入作业题目
+                </h4>
+                
+                <form method="post" action="{% url 'core:answer' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea 
+                            class="form-control" 
+                            name="problem" 
+                            rows="10" 
+                            placeholder="请在此处输入您的R语言作业题目...
+
+示例：
+1. 使用R语言分析mtcars数据集，创建散点图显示重量与油耗的关系
+2. 编写一个函数计算向量的标准差
+3. 从CSV文件读取数据并进行基本的统计分析"
+                            required>{{ request.POST.problem|default_if_none:"" }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_comments" id="includeComments" checked>
+                            <label class="form-check-label text-light" for="includeComments">
+                                包含详细注释
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="fas fa-brain me-2"></i>
+                            开始求解
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div class="col-lg-6">
+            <div class="glass-effect rounded-4 p-4 h-100">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-code text-success me-2"></i>
+                    解决方案
+                </h4>
+                
+                {% if solutions %}
+                    {% for solution in solutions %}
+                    <div class="mb-4">
+                        <h5 class="text-primary">{{ solution.title }}</h5>
+                        <pre><code class="language-r">{{ solution.code }}</code></pre>
+                        <p class="text-light">{{ solution.explanation }}</p>
+                        {% if solution.filename %}
+                        <small class="text-muted">建议文件名: {{ solution.filename }}</small>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr class="border-secondary">{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-lightbulb fa-3x mb-3 opacity-50"></i>
+                        <p>请在左侧输入作业题目，然后点击"开始求解"</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if error_message %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-danger glass-effect">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error_message }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 快速操作 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h5 class="text-white mb-3">其他功能</h5>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'core:explain' %}" class="btn btn-outline-light">
+                        <i class="fas fa-code me-2"></i>
+                        代码解释
+                    </a>
+                    <a href="{% url 'core:talk' %}" class="btn btn-outline-light">
+                        <i class="fas fa-comments me-2"></i>
+                        智能对话
+                    </a>
+                    <a href="{% url 'core:history' %}" class="btn btn-outline-light">
+                        <i class="fas fa-history me-2"></i>
+                        查看历史
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

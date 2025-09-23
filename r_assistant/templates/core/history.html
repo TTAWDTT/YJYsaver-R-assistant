@@ -1,0 +1,227 @@
+{% extends 'core/base.html' %}
+
+{% block title %}历史记录 - R语言智能助手{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-white mb-3">
+                    <i class="fas fa-history text-info me-3"></i>
+                    <span class="text-gradient">历史记录</span>
+                </h1>
+                <p class="lead text-light">
+                    查看您的使用历史，方便回顾和复习
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选选项 -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-effect rounded-4 p-3">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <select class="form-select" name="request_type">
+                            <option value="">所有类型</option>
+                            <option value="explain" {% if request.GET.request_type == 'explain' %}selected{% endif %}>代码解释</option>
+                            <option value="answer" {% if request.GET.request_type == 'answer' %}selected{% endif %}>作业求解</option>
+                            <option value="talk" {% if request.GET.request_type == 'talk' %}selected{% endif %}>智能对话</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" name="date_range">
+                            <option value="">所有时间</option>
+                            <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>今天</option>
+                            <option value="week" {% if request.GET.date_range == 'week' %}selected{% endif %}>本周</option>
+                            <option value="month" {% if request.GET.date_range == 'month' %}selected{% endif %}>本月</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-2"></i>筛选
+                            </button>
+                            <a href="{% url 'core:history' %}" class="btn btn-outline-light">
+                                <i class="fas fa-refresh me-2"></i>重置
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史记录列表 -->
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            {% for record in history_records %}
+            <div class="glass-effect rounded-4 p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        {% if record.request_type == 'explain' %}
+                        <i class="fas fa-code text-primary fa-2x me-3"></i>
+                        <div>
+                            <h5 class="text-white mb-1">代码解释</h5>
+                            <small class="text-muted">分析R语言代码</small>
+                        </div>
+                        {% elif record.request_type == 'answer' %}
+                        <i class="fas fa-lightbulb text-warning fa-2x me-3"></i>
+                        <div>
+                            <h5 class="text-white mb-1">作业求解</h5>
+                            <small class="text-muted">问题解答</small>
+                        </div>
+                        {% elif record.request_type == 'talk' %}
+                        <i class="fas fa-comments text-success fa-2x me-3"></i>
+                        <div>
+                            <h5 class="text-white mb-1">智能对话</h5>
+                            <small class="text-muted">AI对话交流</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-light">{{ record.created_at|date:"Y年m月d日 H:i" }}</small>
+                        <br>
+                        <span class="badge {% if record.status == 'success' %}bg-success{% elif record.status == 'error' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {% if record.status == 'success' %}成功
+                            {% elif record.status == 'error' %}失败
+                            {% else %}处理中{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 用户输入 -->
+                <div class="mb-3">
+                    <h6 class="text-info mb-2">
+                        <i class="fas fa-user me-2"></i>您的输入：
+                    </h6>
+                    <div class="bg-dark bg-opacity-25 rounded p-3">
+                        {% if record.request_type == 'explain' and record.user_input %}
+                        <pre class="text-light mb-0" style="white-space: pre-wrap;"><code class="language-r">{{ record.user_input }}</code></pre>
+                        {% else %}
+                        <p class="text-light mb-0">{{ record.user_input|linebreaks }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- AI回复 -->
+                {% if record.ai_response %}
+                <div class="mb-3">
+                    <h6 class="text-success mb-2">
+                        <i class="fas fa-robot me-2"></i>AI回复：
+                    </h6>
+                    <div class="bg-dark bg-opacity-25 rounded p-3">
+                        <div class="text-light">{{ record.ai_response|linebreaks }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 操作按钮 -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary">
+                    <div class="text-muted small">
+                        <i class="fas fa-clock me-1"></i>
+                        耗时: {{ record.response_time|floatformat:2 }}秒
+                        {% if record.tokens_used %}
+                        | <i class="fas fa-microchip me-1"></i>消耗Tokens: {{ record.tokens_used }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if record.request_type == 'explain' %}
+                        <a href="{% url 'core:explain' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-redo me-1"></i>重新解释
+                        </a>
+                        {% elif record.request_type == 'answer' %}
+                        <a href="{% url 'core:answer' %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-redo me-1"></i>重新求解
+                        </a>
+                        {% elif record.request_type == 'talk' %}
+                        <a href="{% url 'core:talk' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-redo me-1"></i>继续对话
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="glass-effect rounded-4 p-5 text-center">
+                <i class="fas fa-inbox fa-4x text-muted mb-4"></i>
+                <h4 class="text-white mb-3">暂无历史记录</h4>
+                <p class="text-light mb-4">开始使用R语言助手，记录会自动保存在这里</p>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'core:explain' %}" class="btn btn-primary">
+                        <i class="fas fa-code me-2"></i>代码解释
+                    </a>
+                    <a href="{% url 'core:answer' %}" class="btn btn-warning">
+                        <i class="fas fa-lightbulb me-2"></i>作业求解
+                    </a>
+                    <a href="{% url 'core:talk' %}" class="btn btn-success">
+                        <i class="fas fa-comments me-2"></i>智能对话
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    {% if is_paginated %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.request_type %}&request_type={{ request.GET.request_type }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.request_type %}&request_type={{ request.GET.request_type }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.request_type %}&request_type={{ request.GET.request_type }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 返回主页 -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{% url 'core:index' %}" class="btn btn-outline-light">
+                <i class="fas fa-home me-2"></i>返回主页
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// 代码高亮
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
+});
+</script>
+{% endblock %}

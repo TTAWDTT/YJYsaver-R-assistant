@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+
+{% block title %}智能对话 - R语言智能助手{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-white mb-3">
+                    <i class="fas fa-comments text-success me-3"></i>
+                    <span class="text-gradient">智能对话</span>
+                </h1>
+                <p class="lead text-light">
+                    与R语言专家进行友好交流，获取学习建议和编程技巧
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-effect rounded-4 p-4">
+                <!-- 对话历史 -->
+                <div class="chat-container mb-4" style="height: 400px; overflow-y: auto;">
+                    {% for message in conversation_history %}
+                    <div class="chat-message mb-3 {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar me-3">
+                                {% if message.role == 'user' %}
+                                <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                {% else %}
+                                <i class="fas fa-robot fa-2x text-success"></i>
+                                {% endif %}
+                            </div>
+                            <div class="message-content flex-grow-1">
+                                <div class="message-header mb-1">
+                                    <strong class="text-white">
+                                        {% if message.role == 'user' %}您{% else %}AI助手{% endif %}
+                                    </strong>
+                                    <small class="text-muted ms-2">{{ message.timestamp|date:"H:i" }}</small>
+                                </div>
+                                <div class="message-text text-light">
+                                    {{ message.content|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3 opacity-50"></i>
+                        <p>开始您的第一次对话吧！</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- 消息输入 -->
+                <form method="post" action="{% url 'core:talk' %}">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <textarea 
+                            class="form-control" 
+                            name="message" 
+                            rows="3" 
+                            placeholder="请输入您想要咨询的R语言相关问题..."
+                            required></textarea>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            发送
+                        </button>
+                    </div>
+                </form>
+
+                {% if error_message %}
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ error_message }}
+                </div>
+                {% endif %}
+
+                <!-- 快速回复建议 -->
+                <div class="mt-3">
+                    <small class="text-muted">快速提问：</small>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('如何在R中读取CSV文件？')">
+                            如何读取CSV文件？
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('ggplot2包的基本用法是什么？')">
+                            ggplot2基本用法
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('如何计算描述性统计？')">
+                            描述性统计
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('R中的数据类型有哪些？')">
+                            数据类型
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清除历史 -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mx-auto text-center">
+            <form method="post" action="{% url 'core:clear_history' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('确定要清除对话历史吗？')">
+                    <i class="fas fa-trash me-2"></i>
+                    清除对话历史
+                </button>
+            </form>
+            
+            <div class="btn-group ms-3" role="group">
+                <a href="{% url 'core:explain' %}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-code me-2"></i>
+                    代码解释
+                </a>
+                <a href="{% url 'core:answer' %}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    作业求解
+                </a>
+                <a href="{% url 'core:history' %}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-history me-2"></i>
+                    查看历史
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillMessage(text) {
+    document.querySelector('textarea[name="message"]').value = text;
+}
+
+// 自动滚动到底部
+document.addEventListener('DOMContentLoaded', function() {
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

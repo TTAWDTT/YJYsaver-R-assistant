@@ -1,0 +1,506 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}代码解释 - R语言智能助手{% endblock %}
+
+{% block extra_css %}
+<style>
+.code-container {
+    min-height: 500px;
+}
+
+.result-container {
+    min-height: 400px;
+}
+
+.code-input {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.analysis-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- 页面标题 -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-white mb-3">
+                    <i class="fas fa-code text-primary me-3"></i>
+                    <span class="text-gradient">代码解释</span>
+                </h1>
+                <p class="lead text-light">
+                    粘贴您的R代码，AI将为您提供详细的解释和分析
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- 代码输入区域 -->
+        <div class="col-lg-6">
+            <div class="glass-effect rounded-4 p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-white mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        输入R代码
+                    </h4>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-light btn-sm" id="clearCode">
+                            <i class="fas fa-trash"></i> 清空
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-sm" id="pasteCode">
+                            <i class="fas fa-paste"></i> 粘贴
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-sm" id="loadExample">
+                            <i class="fas fa-file-code"></i> 示例
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="code-editor">
+                    <div class="code-editor-header">
+                        <div class="code-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="text-muted ms-2">R Script</span>
+                        <div class="ms-auto">
+                            <small class="text-muted" id="codeStats">行数: 0 | 字符: 0</small>
+                        </div>
+                    </div>
+                    <div class="code-editor-content">
+                        <textarea 
+                            class="form-control code-input" 
+                            id="codeInput" 
+                            rows="15" 
+                            placeholder="请在此处粘贴您的R代码...
+
+示例：
+# 数据分析示例
+data <- mtcars
+summary(data$mpg)
+
+# 创建散点图
+library(ggplot2)
+ggplot(data, aes(x=wt, y=mpg)) +
+  geom_point() +
+  geom_smooth(method='lm')">
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeAnalysis" checked>
+                        <label class="form-check-label text-light" for="includeAnalysis">
+                            包含代码质量分析
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-lg" id="explainBtn">
+                        <i class="fas fa-brain me-2"></i>
+                        开始解释
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div class="col-lg-6">
+            <div class="glass-effect rounded-4 p-4 h-100">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    解释结果
+                </h4>
+                
+                <div id="resultContainer" class="result-container">
+                    <div id="emptyState" class="text-center text-muted py-5">
+                        <i class="fas fa-code fa-3x mb-3 opacity-50"></i>
+                        <p>请在左侧输入R代码，然后点击"开始解释"</p>
+                    </div>
+                    
+                    <div id="explanationResult" class="d-none">
+                        <div class="explanation-content">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="text-primary mb-0">AI解释</h5>
+                                <small class="text-muted" id="processingTime"></small>
+                            </div>
+                            <div id="explanationText" class="text-light mb-3"></div>
+                        </div>
+                        
+                        <div class="action-buttons mt-3">
+                            <button type="button" class="btn btn-outline-light btn-sm" id="copyExplanation">
+                                <i class="fas fa-copy"></i> 复制解释
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="saveResult">
+                                <i class="fas fa-download"></i> 保存结果
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="askQuestion">
+                                <i class="fas fa-question-circle"></i> 追问
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 代码分析结果 -->
+    <div class="row mt-4" id="analysisSection" style="display: none;">
+        <div class="col-12">
+            <div class="analysis-section">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-chart-bar text-info me-2"></i>
+                    代码质量分析
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="analysisText" class="text-light"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="qualityScore">--</div>
+                                <div class="text-muted small">质量分数</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="complexityScore">--</div>
+                                <div class="text-muted small">复杂度</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="linesCount">--</div>
+                                <div class="text-muted small">代码行数</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速操作区域 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h5 class="text-white mb-3">快速操作</h5>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'core:answer' %}" class="btn btn-outline-light">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        作业求解
+                    </a>
+                    <a href="{% url 'core:talk' %}" class="btn btn-outline-light">
+                        <i class="fas fa-comments me-2"></i>
+                        智能对话
+                    </a>
+                    <a href="{% url 'core:history' %}" class="btn btn-outline-light">
+                        <i class="fas fa-history me-2"></i>
+                        查看历史
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class CodeExplainer {
+    constructor() {
+        this.codeInput = document.getElementById('codeInput');
+        this.explainBtn = document.getElementById('explainBtn');
+        this.resultContainer = document.getElementById('resultContainer');
+        this.emptyState = document.getElementById('emptyState');
+        this.explanationResult = document.getElementById('explanationResult');
+        this.analysisSection = document.getElementById('analysisSection');
+        
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.updateStats();
+    }
+
+    setupEventListeners() {
+        // 代码输入统计
+        this.codeInput.addEventListener('input', () => {
+            this.updateStats();
+        });
+
+        // 解释按钮
+        this.explainBtn.addEventListener('click', () => {
+            this.explainCode();
+        });
+
+        // 工具按钮
+        document.getElementById('clearCode').addEventListener('click', () => {
+            this.codeInput.value = '';
+            this.updateStats();
+            this.hideResults();
+        });
+
+        document.getElementById('pasteCode').addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                this.codeInput.value = text;
+                this.updateStats();
+            } catch (err) {
+                RAssistant.showToast('粘贴失败，请手动粘贴', 'error');
+            }
+        });
+
+        document.getElementById('loadExample').addEventListener('click', () => {
+            this.loadExample();
+        });
+
+        // 结果操作按钮
+        document.getElementById('copyExplanation').addEventListener('click', () => {
+            this.copyExplanation();
+        });
+
+        document.getElementById('saveResult').addEventListener('click', () => {
+            this.saveResult();
+        });
+
+        document.getElementById('askQuestion').addEventListener('click', () => {
+            this.askQuestion();
+        });
+    }
+
+    updateStats() {
+        const code = this.codeInput.value;
+        const lines = code.split('\n').length;
+        const chars = code.length;
+        
+        document.getElementById('codeStats').textContent = `行数: ${lines} | 字符: ${chars}`;
+    }
+
+    loadExample() {
+        const example = `# R语言数据分析示例
+# 加载必要的库
+library(ggplot2)
+library(dplyr)
+
+# 使用内置的mtcars数据集
+data <- mtcars
+
+# 数据探索
+head(data)
+summary(data)
+
+# 数据处理
+data_clean <- data %>%
+  filter(mpg > 15) %>%
+  mutate(efficiency = ifelse(mpg > 20, "高效", "低效"))
+
+# 创建可视化
+ggplot(data_clean, aes(x = wt, y = mpg, color = efficiency)) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "汽车重量与油耗关系",
+       x = "重量 (1000 lbs)",
+       y = "油耗 (mpg)",
+       color = "燃油效率") +
+  theme_minimal()
+
+# 统计分析
+cor(data$wt, data$mpg)
+model <- lm(mpg ~ wt, data = data)
+summary(model)`;
+
+        this.codeInput.value = example;
+        this.updateStats();
+    }
+
+    async explainCode() {
+        const code = this.codeInput.value.trim();
+        
+        if (!code) {
+            RAssistant.showToast('请输入要解释的代码', 'warning');
+            return;
+        }
+
+        // 验证代码
+        const validation = RAssistant.validateRCode(code);
+        if (!validation.isValid) {
+            const confirmResult = confirm(
+                `代码可能有以下问题：\n${validation.errors.join('\n')}\n\n是否继续解释？`
+            );
+            if (!confirmResult) return;
+        }
+
+        this.explainBtn.disabled = true;
+        this.explainBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>解释中...';
+        
+        RAssistant.showLoading('AI正在分析您的代码...');
+
+        try {
+            const result = await RAssistant.makeApiRequest('/explain/', {
+                code: code
+            });
+
+            if (result.success) {
+                this.showExplanation(result.explanation, result.processing_time);
+                
+                // 如果开启了代码分析
+                if (document.getElementById('includeAnalysis').checked) {
+                    await this.analyzeCode(code);
+                }
+                
+                RAssistant.showToast('代码解释完成！', 'success');
+            } else {
+                throw new Error(result.error || '解释失败');
+            }
+        } catch (error) {
+            console.error('解释失败:', error);
+            RAssistant.showToast(error.message || '解释失败，请稍后重试', 'error');
+        } finally {
+            RAssistant.hideLoading();
+            this.explainBtn.disabled = false;
+            this.explainBtn.innerHTML = '<i class="fas fa-brain me-2"></i>开始解释';
+        }
+    }
+
+    async analyzeCode(code) {
+        try {
+            const result = await RAssistant.makeApiRequest('/analyze/', {
+                code: code,
+                type: 'quality'
+            });
+
+            if (result.success) {
+                this.showAnalysis(result.result);
+            }
+        } catch (error) {
+            console.error('分析失败:', error);
+        }
+    }
+
+    showExplanation(explanation, processingTime) {
+        this.emptyState.style.display = 'none';
+        this.explanationResult.classList.remove('d-none');
+        
+        document.getElementById('explanationText').innerHTML = 
+            RAssistantUtils.parseMarkdown(explanation);
+        document.getElementById('processingTime').textContent = 
+            `处理时间: ${RAssistant.formatTime(processingTime)}`;
+        
+        // 高亮代码块
+        RAssistant.highlightCode();
+    }
+
+    showAnalysis(analysisResult) {
+        const staticAnalysis = analysisResult.static_analysis;
+        const aiAnalysis = analysisResult.ai_analysis;
+        
+        if (staticAnalysis) {
+            document.getElementById('qualityScore').textContent = 
+                Math.round(staticAnalysis.quality_score || 0);
+            document.getElementById('complexityScore').textContent = 
+                staticAnalysis.complexity?.cyclomatic_complexity || '--';
+            document.getElementById('linesCount').textContent = 
+                staticAnalysis.metrics?.lines_of_code || '--';
+        }
+        
+        document.getElementById('analysisText').innerHTML = 
+            RAssistantUtils.parseMarkdown(aiAnalysis);
+        
+        this.analysisSection.style.display = 'block';
+        
+        // 滚动到分析结果
+        this.analysisSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
+
+    hideResults() {
+        this.emptyState.style.display = 'block';
+        this.explanationResult.classList.add('d-none');
+        this.analysisSection.style.display = 'none';
+    }
+
+    async copyExplanation() {
+        const explanationText = document.getElementById('explanationText').textContent;
+        try {
+            await navigator.clipboard.writeText(explanationText);
+            RAssistant.showToast('解释内容已复制', 'success', 2000);
+        } catch (err) {
+            RAssistant.showToast('复制失败', 'error');
+        }
+    }
+
+    saveResult() {
+        const code = this.codeInput.value;
+        const explanation = document.getElementById('explanationText').textContent;
+        const timestamp = new Date().toLocaleString();
+        
+        const content = `R代码解释结果
+生成时间: ${timestamp}
+
+原始代码:
+${code}
+
+AI解释:
+${explanation}
+
+---
+Generated by R语言智能助手`;
+        
+        RAssistantUtils.downloadFile(content, `code_explanation_${Date.now()}.txt`);
+        RAssistant.showToast('解释结果已保存', 'success');
+    }
+
+    askQuestion() {
+        const code = this.codeInput.value;
+        const explanation = document.getElementById('explanationText').textContent;
+        
+        // 构造追问链接，带上当前代码和解释作为上下文
+        const params = new URLSearchParams({
+            context: `我刚才解释了这段R代码：\n${code}\n\n解释结果是：\n${explanation}\n\n我想继续了解：`
+        });
+        
+        window.open(`{% url 'core:talk' %}?${params.toString()}`, '_blank');
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    new CodeExplainer();
+});
+</script>
+{% endblock %}
