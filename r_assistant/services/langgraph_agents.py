@@ -32,12 +32,21 @@ class BaseAgent:
     def _create_llm(self):
         """创建LLM实例"""
         # 使用DeepSeek API兼容的OpenAI接口
+        try:
+            api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
+            base_url = getattr(settings, 'DEEPSEEK_API_URL', 'https://api.deepseek.com/v1')
+        except Exception:
+            # Django 设置未配置时的默认值
+            import os
+            api_key = os.environ.get('DEEPSEEK_API_KEY', '')
+            base_url = os.environ.get('DEEPSEEK_API_URL', 'https://api.deepseek.com/v1')
+        
         return ChatOpenAI(
             model=self.config.model,
             temperature=self.config.temperature,
             max_tokens=self.config.max_tokens,
-            openai_api_base=getattr(settings, 'DEEPSEEK_API_URL', 'https://api.deepseek.com/v1'),
-            openai_api_key=getattr(settings, 'DEEPSEEK_API_KEY', ''),
+            base_url=base_url,
+            api_key=api_key,
             timeout=60
         )
     
@@ -217,8 +226,12 @@ class ConversationAgent(BaseAgent):
             # 调用LLM
             response = await self.llm.ainvoke(messages)
             
+            # 调试输出
+            logger.info(f"LLM响应类型: {type(response)}")
+            logger.info(f"LLM响应内容长度: {len(response.content) if response.content else 0}")
+            
             # 更新状态
-            state["ai_response"] = response.content
+            state["ai_response"] = response.content or "抱歉，我无法生成回复。"
             
             # 添加到对话历史
             state["conversation_history"].extend([

@@ -7,6 +7,7 @@ import logging
 from django.http import JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.views import View
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 
@@ -18,7 +19,7 @@ from .models import ConversationHistory, RequestLog, CodeAnalysis
 logger = logging.getLogger(__name__)
 
 
-class BaseAPIView:
+class BaseAPIView(View):
     """API视图基类"""
     
     def _get_session_id(self, request):
@@ -35,7 +36,8 @@ class BaseAPIView:
             session_id=self._get_session_id(request),
             request_type=request_type,
             input_content=input_content,
-            ip_address=self._get_client_ip(request)
+            ip_address=self._get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
     
     def _update_request_log(self, request_log, response_content='', processing_time=0, success=True, error_message=''):
@@ -339,4 +341,126 @@ class HealthCheckAPIView(BaseAPIView):
                 'status': 'unhealthy',
                 'timestamp': timezone.now().isoformat(),
                 'error': str(e)
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ExplainAPIView(BaseAPIView):
+    """代码解释API视图"""
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '').strip()
+            
+            if not code:
+                return JsonResponse({
+                    'success': False,
+                    'error': '请提供要解释的R代码'
+                }, status=400)
+            
+            # 记录请求日志
+            request_log = self._create_request_log(request, 'explain', code)
+            session_id = self._get_session_id(request)
+            
+            try:
+                # 使用LangGraph服务解释代码
+                result = langgraph_service.explain_code(code, session_id)
+                
+                # 更新请求日志
+                self._update_request_log(
+                    request_log, 
+                    result.get('content', ''),
+                    result.get('processing_time', 0),
+                    result.get('success', True),
+                    result.get('error', '')
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'explanation': result.get('content', ''),
+                    'processing_time': result.get('processing_time', 0),
+                    'metadata': result.get('metadata', {})
+                })
+                
+            except AIServiceError as e:
+                logger.error("代码解释失败: %s", str(e))
+                self._update_request_log(request_log, '', 0, False, str(e))
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': f'代码解释失败: {str(e)}'
+                }, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': '请求数据格式错误'
+            }, status=400)
+        except Exception as e:
+            logger.error("处理代码解释请求时出错: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '服务器内部错误'
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AnswerAPIView(BaseAPIView):
+    """问题解答API视图"""
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            problem = data.get('problem', '').strip()
+            
+            if not problem:
+                return JsonResponse({
+                    'success': False,
+                    'error': '请提供要解决的问题'
+                }, status=400)
+            
+            # 记录请求日志
+            request_log = self._create_request_log(request, 'answer', problem)
+            session_id = self._get_session_id(request)
+            
+            try:
+                # 使用LangGraph服务解决问题
+                result = langgraph_service.solve_problem(problem, session_id)
+                
+                # 更新请求日志
+                self._update_request_log(
+                    request_log,
+                    f"生成了{len(result.get('solutions', []))}个解决方案",
+                    result.get('processing_time', 0),
+                    result.get('success', True),
+                    result.get('error', '')
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'solutions': result.get('solutions', []),
+                    'processing_time': result.get('processing_time', 0),
+                    'metadata': result.get('metadata', {})
+                })
+                
+            except AIServiceError as e:
+                logger.error("问题解答失败: %s", str(e))
+                self._update_request_log(request_log, '', 0, False, str(e))
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': f'问题解答失败: {str(e)}'
+                }, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': '请求数据格式错误'
+            }, status=400)
+        except Exception as e:
+            logger.error("处理问题解答请求时出错: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '服务器内部错误'
             }, status=500)

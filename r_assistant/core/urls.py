@@ -5,6 +5,7 @@ Core app URL configuration
 from django.urls import path
 from . import views
 from . import workflow_monitor
+from . import api_views
 
 app_name = 'core'
 
@@ -15,6 +16,11 @@ urlpatterns = [
     path('answer/', views.AnswerView.as_view(), name='answer'),
     path('talk/', views.TalkView.as_view(), name='talk'),
     path('history/', views.HistoryView.as_view(), name='history'),
+    
+    # API endpoints  
+    path('api/explain/', api_views.ExplainAPIView.as_view(), name='api_explain'),
+    path('api/answer/', api_views.AnswerAPIView.as_view(), name='api_answer'),
+    path('api/talk/', api_views.TalkAPIView.as_view(), name='api_talk'),
     
     # Functional operations
     path('clear-history/', views.clear_history, name='clear_history'),

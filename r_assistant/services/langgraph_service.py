@@ -21,6 +21,18 @@ class LangGraphService:
     
     def __init__(self):
         self.workflow_engine = workflow_engine
+        try:
+            self.api_key_available = bool(getattr(settings, 'DEEPSEEK_API_KEY', ''))
+        except Exception:
+            import os
+            self.api_key_available = bool(os.environ.get('DEEPSEEK_API_KEY', ''))
+        
+    def _check_api_availability(self):
+        """检查API是否可用"""
+        if not self.api_key_available:
+            logger.warning("DEEPSEEK_API_KEY未配置，使用演示模式")
+            return False
+        return True
         
     def _run_async(self, coro):
         """在同步环境中运行异步代码"""
@@ -63,6 +75,10 @@ class LangGraphService:
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
             
+            # 检查API可用性
+            if not self._check_api_availability():
+                return self._create_demo_response("explain", code)
+            
             # 执行工作流
             result = self._run_async(
                 self.workflow_engine.execute_workflow(
@@ -101,6 +117,10 @@ class LangGraphService:
         """问题求解服务 - 使用LangGraph工作流"""
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
+            
+            # 检查API可用性
+            if not self._check_api_availability():
+                return self._create_demo_response("solve", problem)
             
             # 执行工作流
             result = self._run_async(
@@ -145,6 +165,10 @@ class LangGraphService:
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
             
+            # 检查API可用性
+            if not self._check_api_availability():
+                return self._create_demo_response("chat", message)
+            
             # 转换对话历史
             history_messages = self._convert_history_to_messages(conversation_history or [])
             
@@ -172,8 +196,14 @@ class LangGraphService:
                 }
             }
             
+            # 检查是否有内容返回
+            if not response["content"] and response["success"]:
+                logger.warning("AI响应为空，但状态为成功")
+                response["content"] = "抱歉，我暂时无法生成回复，请稍后再试。"
+            
             if not response["success"]:
-                raise AIServiceError(f"智能对话失败: {'; '.join(result.get('errors', []))}")
+                error_msg = '; '.join(result.get('errors', [])) or "未知错误"
+                raise AIServiceError(f"智能对话失败: {error_msg}")
             
             logger.info(f"智能对话完成，会话ID: {session_id}")
             return response
@@ -186,6 +216,10 @@ class LangGraphService:
         """代码质量分析服务"""
         try:
             session_id = session_id or f"session_{datetime.now().timestamp()}"
+            
+            # 检查API可用性
+            if not self._check_api_availability():
+                return self._create_demo_response("analyze", code)
             
             # 执行代码解释工作流（包含分析）
             result = self._run_async(
@@ -290,6 +324,27 @@ test_that("异常处理测试", {{
         except Exception as e:
             logger.error(f"代码优化失败: {str(e)}")
             raise AIServiceError(f"代码优化失败: {str(e)}")
+    
+    def _create_demo_response(self, request_type: str, user_input: str) -> Dict[str, Any]:
+        """创建演示响应（当API密钥不可用时）"""
+        demo_responses = {
+            "chat": f"你好！我是R语言智能助手。\n\n你说：{user_input}\n\n这是一个演示回复。要启用完整的AI功能，请在.env文件中配置DEEPSEEK_API_KEY。\n\n我可以帮助你：\n- 解释R代码\n- 解决编程问题\n- 提供学习建议\n- 数据分析指导",
+            "explain": f"代码解释功能演示：\n\n你提交的代码：\n{user_input}\n\n这是演示解释。配置API密钥后，我将为你提供详细的代码分析，包括：\n- 逐行代码解释\n- 函数功能说明\n- 最佳实践建议\n- 可能的优化方案",
+            "solve": f"问题解决功能演示：\n\n你的问题：{user_input}\n\n这是演示解决方案。配置API密钥后，我将提供：\n- 多种解决方案\n- 详细代码实现\n- 最佳实践指导\n- 相关包推荐",
+            "analyze": f"代码分析功能演示：\n\n你提交的代码：\n{user_input}\n\n这是演示分析。配置API密钥后，我将提供：\n- 代码质量评分\n- 性能分析建议\n- 代码规范检查\n- 优化建议"
+        }
+        
+        return {
+            "content": demo_responses.get(request_type, f"演示响应：{user_input}"),
+            "processing_time": 0.1,
+            "usage": {"total_tokens": 0},
+            "success": True,
+            "metadata": {
+                "demo_mode": True,
+                "api_key_required": True,
+                "message": "请配置DEEPSEEK_API_KEY以启用完整功能"
+            }
+        }
 
 
 # 创建服务工厂

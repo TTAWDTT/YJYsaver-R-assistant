@@ -24,6 +24,8 @@ class RequestLog(models.Model):
     processing_time = models.FloatField(null=True, blank=True)  # 处理时间（秒）
     success = models.BooleanField(default=True)
     error_message = models.TextField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)  # 添加IP地址字段
+    user_agent = models.TextField(null=True, blank=True)  # 添加用户代理字段
     created_at = models.DateTimeField(default=timezone.now)
     
     class Meta:

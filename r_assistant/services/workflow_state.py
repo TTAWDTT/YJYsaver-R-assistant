@@ -65,6 +65,11 @@ class WorkflowState(TypedDict):
     # 工作流控制
     next_step: Optional[str]
     workflow_complete: bool
+    
+    # 执行状态
+    status: Optional[str]  # success, error, warning
+    summary: Optional[str]  # 执行摘要
+    processing_time: Optional[float]  # 处理时间（秒）
 
 
 class AgentConfig(BaseModel):

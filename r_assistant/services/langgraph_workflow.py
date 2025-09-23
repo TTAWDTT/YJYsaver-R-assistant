@@ -208,7 +208,12 @@ class WorkflowEngine:
     
     async def _finalize_node(self, state: WorkflowState) -> WorkflowState:
         """最终化节点"""
+        logger.info("执行 finalize 节点")
         state["processing_steps"].append(f"[{datetime.now()}] 开始最终化处理")
+        
+        # 设置结束时间（如果未设置）
+        if not state.get("end_time"):
+            state["end_time"] = datetime.now()
         
         # 计算总处理时间
         if state.get("start_time") and state.get("end_time"):
@@ -219,14 +224,18 @@ class WorkflowEngine:
         if state.get("errors"):
             state["status"] = "error"
             state["summary"] = f"处理失败: {'; '.join(state['errors'])}"
+            logger.info("设置状态为 error")
         elif state.get("warnings"):
             state["status"] = "warning"
             state["summary"] = f"处理完成但有警告: {'; '.join(state['warnings'])}"
+            logger.info("设置状态为 warning")
         else:
             state["status"] = "success"
             state["summary"] = "处理成功完成"
+            logger.info("设置状态为 success")
         
         state["processing_steps"].append(f"[{datetime.now()}] 最终化处理完成")
+        logger.info(f"finalize完成，最终状态: {state.get('status')}")
         return state
 
 

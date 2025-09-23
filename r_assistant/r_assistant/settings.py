@@ -141,7 +141,7 @@ CORS_ALLOWED_ORIGINS = [
 
 # Custom settings
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
-DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions'
+DEEPSEEK_API_URL = os.getenv('DEEPSEEK_API_URL', 'https://api.deepseek.com/v1')  # 使用基础URL而不是完整endpoint
 
 # Logging configuration
 LOGGING = {
