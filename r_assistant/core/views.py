@@ -112,33 +112,6 @@ def simple_ai_response(request_type, user_input):
 
 class BaseAPIView(View):
     """API视图基类"""
-    
-    def _get_session_id(self, request):
-        """获取会话ID"""
-        session_id = request.session.session_key
-        if not session_id:
-            request.session.create()
-            session_id = request.session.session_key
-        return session_id
-    
-    def _create_request_log(self, request, request_type, input_content):
-        """创建请求日志"""
-        return RequestLog.objects.create(
-            session_id=self._get_session_id(request),
-            request_type=request_type,
-            input_content=input_content,
-            ip_address=get_client_ip(request)
-        )
-    
-    def _update_request_log(self, request_log, response_content='', processing_time=0, success=True, error_message=''):
-        """更新请求日志"""
-        request_log.response_content = response_content
-        request_log.processing_time = processing_time
-        request_log.success = success
-        request_log.error_message = error_message
-        request_log.save()
-
-
 class IndexView(TemplateView):
     template_name = 'core/index.html'
 
@@ -229,7 +202,7 @@ class ExplainView(TemplateView):
                 
                 context = self.get_context_data()
                 context.update({
-                    'explanation_result': explanation,
+                    'explanation': explanation,
                     'original_code': r_code,
                     'processing_time': processing_time
                 })
