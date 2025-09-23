@@ -20,7 +20,13 @@ urlpatterns = [
     # API endpoints  
     path('api/explain/', api_views.ExplainAPIView.as_view(), name='api_explain'),
     path('api/answer/', api_views.AnswerAPIView.as_view(), name='api_answer'),
+    path('api/answer/stream/', api_views.AnswerStreamAPIView.as_view(), name='answer_stream'),
     path('api/talk/', api_views.TalkAPIView.as_view(), name='api_talk'),
+    
+    # History API endpoints
+    path('api/history/answer/', api_views.AnswerHistoryAPIView.as_view(), name='api_answer_history'),
+    path('api/history/answer/<uuid:record_id>/', api_views.AnswerHistoryDetailAPIView.as_view(), name='api_answer_history_detail'),
+    path('api/history/clear/', api_views.ClearHistoryAPIView.as_view(), name='api_clear_history'),
     
     # Functional operations
     path('clear-history/', views.clear_history, name='clear_history'),

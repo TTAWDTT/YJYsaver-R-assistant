@@ -477,3 +477,273 @@ class AnswerAPIView(BaseAPIView):
                 'success': False,
                 'error': '服务器内部错误'
             }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AnswerStreamAPIView(BaseAPIView):
+    """作业求解流式API视图 - 支持文件上传和实时更新"""
+    
+    def post(self, request):
+        try:
+            problem = request.POST.get('problem', '').strip()
+            include_comments = request.POST.get('include_comments') == 'on'
+            uploaded_files = request.FILES.getlist('uploaded_files')
+            
+            if not problem:
+                return JsonResponse({
+                    'success': False,
+                    'error': '请提供要解决的问题'
+                }, status=400)
+            
+            session_id = self._get_session_id(request)
+            
+            # 处理上传的文件
+            file_contents = []
+            if uploaded_files:
+                from .file_processors import process_uploaded_files
+                processed_files = process_uploaded_files(uploaded_files)
+                
+                for file_info in processed_files:
+                    file_contents.append({
+                        'filename': file_info['filename'],
+                        'content': file_info['content'],
+                        'file_type': file_info['file_type'],
+                        'preview': file_info['preview']
+                    })
+            
+            # 创建请求日志
+            request_log = self._create_request_log(
+                request, 
+                'answer', 
+                f"问题: {problem}\n文件: {len(uploaded_files)} 个"
+            )
+            
+            # 保存上传的文件到数据库
+            from .models import UploadedFile
+            uploaded_file_records = []
+            for i, file in enumerate(uploaded_files):
+                file_record = UploadedFile.objects.create(
+                    request_log=request_log,
+                    original_filename=file.name,
+                    file_type=file.content_type,
+                    file_size=file.size,
+                    file_content=file_contents[i]['content'] if i < len(file_contents) else ''
+                )
+                uploaded_file_records.append(file_record)
+            
+            # 返回会话ID和初始状态，前端将使用这个ID来获取流式更新
+            return JsonResponse({
+                'success': True,
+                'session_id': session_id,
+                'request_log_id': str(request_log.id),
+                'files_processed': len(uploaded_files),
+                'message': '开始处理请求...'
+            })
+            
+        except Exception as e:
+            logger.error("处理流式问题解答请求时出错: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '服务器内部错误'
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AnswerHistoryAPIView(BaseAPIView):
+    """作业求解历史记录API"""
+    
+    def get(self, request):
+        """获取历史记录列表"""
+        try:
+            session_id = self._get_session_id(request)
+            
+            # 获取作业求解类型的历史记录
+            history_records = RequestLog.objects.filter(
+                session_id=session_id,
+                request_type='answer'
+            ).order_by('-created_at')[:20]  # 最近20条
+            
+            history_data = []
+            for record in history_records:
+                # 获取解决方案
+                solutions = []
+                for solution in record.solutions.all():
+                    solutions.append({
+                        'title': solution.title,
+                        'code': solution.code,
+                        'explanation': solution.explanation,
+                        'filename': solution.filename
+                    })
+                
+                # 获取上传文件
+                uploaded_files = []
+                for file in record.uploadedfile_set.all():
+                    uploaded_files.append({
+                        'filename': file.original_filename,
+                        'file_type': file.file_type,
+                        'file_size': file.file_size
+                    })
+                
+                history_data.append({
+                    'id': str(record.id),
+                    'input_content': record.input_content,
+                    'created_at': record.created_at.isoformat(),
+                    'success': record.success,
+                    'processing_time': record.processing_time,
+                    'solutions': solutions,
+                    'uploaded_files': uploaded_files
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'history': history_data
+            })
+            
+        except Exception as e:
+            logger.error("获取历史记录失败: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '获取历史记录失败'
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AnswerHistoryDetailAPIView(BaseAPIView):
+    """历史记录详情API"""
+    
+    def get(self, request, record_id):
+        """获取单条历史记录详情"""
+        try:
+            session_id = self._get_session_id(request)
+            
+            record = RequestLog.objects.get(
+                id=record_id,
+                session_id=session_id,
+                request_type='answer'
+            )
+            
+            # 获取解决方案
+            solutions = []
+            for solution in record.solutions.all():
+                solutions.append({
+                    'title': solution.title,
+                    'code': solution.code,
+                    'explanation': solution.explanation,
+                    'filename': solution.filename
+                })
+            
+            # 获取上传文件
+            uploaded_files = []
+            for file in record.uploadedfile_set.all():
+                uploaded_files.append({
+                    'filename': file.original_filename,
+                    'file_type': file.file_type,
+                    'file_size': file.file_size,
+                    'content': file.file_content[:1000] if file.file_content else ''  # 限制内容长度
+                })
+            
+            record_data = {
+                'id': str(record.id),
+                'input_content': record.input_content,
+                'response_content': record.response_content,
+                'created_at': record.created_at.isoformat(),
+                'success': record.success,
+                'processing_time': record.processing_time,
+                'error_message': record.error_message,
+                'solutions': solutions,
+                'uploaded_files': uploaded_files
+            }
+            
+            return JsonResponse({
+                'success': True,
+                'record': record_data
+            })
+            
+        except RequestLog.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '历史记录不存在'
+            }, status=404)
+        except Exception as e:
+            logger.error("获取历史记录详情失败: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '获取历史记录详情失败'
+            }, status=500)
+    
+    def delete(self, request, record_id):
+        """删除单条历史记录"""
+        try:
+            session_id = self._get_session_id(request)
+            
+            record = RequestLog.objects.get(
+                id=record_id,
+                session_id=session_id,
+                request_type='answer'
+            )
+            
+            record.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': '历史记录已删除'
+            })
+            
+        except RequestLog.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '历史记录不存在'
+            }, status=404)
+        except Exception as e:
+            logger.error("删除历史记录失败: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '删除历史记录失败'
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ClearHistoryAPIView(BaseAPIView):
+    """清空历史记录API"""
+    
+    def post(self, request):
+        """清空历史记录"""
+        try:
+            data = json.loads(request.body)
+            clear_type = data.get('type', 'session')  # 'session' 或 'all'
+            
+            session_id = self._get_session_id(request)
+            
+            if clear_type == 'session':
+                # 只清空当前会话的记录
+                deleted_count = RequestLog.objects.filter(
+                    session_id=session_id,
+                    request_type='answer'
+                ).delete()[0]
+            elif clear_type == 'all':
+                # 清空所有记录（仅限当前会话的所有类型）
+                deleted_count = RequestLog.objects.filter(
+                    session_id=session_id
+                ).delete()[0]
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': '无效的清空类型'
+                }, status=400)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'已清空 {deleted_count} 条记录'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': '请求数据格式错误'
+            }, status=400)
+        except Exception as e:
+            logger.error("清空历史记录失败: %s", str(e))
+            return JsonResponse({
+                'success': False,
+                'error': '清空历史记录失败'
+            }, status=500)

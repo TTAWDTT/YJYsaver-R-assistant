@@ -196,7 +196,7 @@ class AnswerView(TemplateView):
             
             # 验证文件大小和类型
             max_file_size = 10 * 1024 * 1024  # 10MB
-            allowed_extensions = ['csv', 'txt', 'xlsx', 'xls', 'r', 'rmd', 'json', 'xml', 'py', 'js', 'html', 'css']
+            allowed_extensions = ['csv', 'txt', 'xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 'r', 'rmd', 'json', 'xml', 'py', 'js', 'html', 'css']
             
             for uploaded_file in uploaded_files:
                 if uploaded_file.size > max_file_size:
@@ -227,39 +227,30 @@ class AnswerView(TemplateView):
             
             # 处理上传的文件
             file_contents = []
-            for uploaded_file in uploaded_files:
-                try:
-                    # 读取文件内容
-                    if uploaded_file.content_type.startswith('text/') or uploaded_file.name.endswith(('.csv', '.txt', '.r', '.rmd', '.json', '.xml', '.py', '.js', '.html', '.css')):
-                        content = uploaded_file.read().decode('utf-8')
-                    else:
-                        content = f"[二进制文件: {uploaded_file.name}, 大小: {uploaded_file.size} 字节]"
+            if uploaded_files:
+                from .file_processors import process_uploaded_files
+                processed_files = process_uploaded_files(uploaded_files)
+                
+                for i, file_info in enumerate(processed_files):
+                    file_contents.append({
+                        'filename': file_info['filename'],
+                        'content': file_info['content'],
+                        'type': file_info['file_type'],
+                        'size': uploaded_files[i].size if i < len(uploaded_files) else 0,
+                        'preview': file_info.get('preview', '')
+                    })
                     
                     # 保存文件信息到数据库
-                    file_type = self._get_file_type(uploaded_file.name)
                     from .models import UploadedFile
                     UploadedFile.objects.create(
                         request_log=request_log,
-                        original_filename=uploaded_file.name,
-                        file_type=file_type,
-                        file_size=uploaded_file.size,
-                        file_content=content,
-                        mime_type=uploaded_file.content_type,
+                        original_filename=file_info['filename'],
+                        file_type=file_info['file_type'],
+                        file_size=uploaded_files[i].size if i < len(uploaded_files) else 0,
+                        file_content=file_info['content'],
+                        mime_type=getattr(uploaded_files[i], 'content_type', '') if i < len(uploaded_files) else '',
                         encoding='utf-8'
                     )
-                    
-                    file_contents.append({
-                        'filename': uploaded_file.name,
-                        'content': content,
-                        'size': uploaded_file.size,
-                        'type': file_type
-                    })
-                    
-                except Exception as e:
-                    logger.error(f"处理上传文件 {uploaded_file.name} 时出错: {str(e)}")
-                    context = self.get_context_data()
-                    context['error_message'] = f"处理文件 '{uploaded_file.name}' 时出错"
-                    return self.render_to_response(context)
             
             try:
                 # 使用LangGraph服务进行问题求解，包含文件内容

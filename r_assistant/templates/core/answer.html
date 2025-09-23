@@ -158,41 +158,281 @@
 .file-item .remove-file:hover {
     background-color: rgba(239, 68, 68, 0.2);
 }
+
+/* 增强的代码显示样式 */
+.code-section {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(26, 32, 44, 0.9), rgba(45, 55, 72, 0.9));
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.code-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.code-content pre {
+    background: none !important;
+    border: none !important;
+    margin: 0;
+    padding: 1.5rem;
+    border-radius: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.code-content pre code {
+    background: none !important;
+    color: #e2e8f0 !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+}
+
+.solution-item {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.solution-item:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.solution-header {
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.explanation-section {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: none; /* 允许完全展开 */
+}
+
+.explanation-content {
+    max-height: none; /* 移除高度限制 */
+    overflow: visible;
+}
+
+/* 详细解释展开样式 */
+.explanation-content .markdown-content {
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.explanation-content .markdown-content h2,
+.explanation-content .markdown-content h3,
+.explanation-content .markdown-content h4 {
+    color: #60a5fa;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.explanation-content .markdown-content h2 {
+    font-size: 1.25rem;
+    border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+    padding-bottom: 0.5rem;
+}
+
+.explanation-content .markdown-content h3 {
+    font-size: 1.1rem;
+    color: #34d399;
+}
+
+.explanation-content .markdown-content h4 {
+    font-size: 1rem;
+    color: #fbbf24;
+}
+
+.explanation-content .markdown-content p {
+    margin-bottom: 1rem;
+    color: #e2e8f0;
+}
+
+.explanation-content .markdown-content ul,
+.explanation-content .markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.explanation-content .markdown-content li {
+    margin-bottom: 0.5rem;
+    color: #cbd5e0;
+}
+
+.explanation-content .markdown-content code {
+    background-color: rgba(45, 55, 72, 0.8);
+    color: #fbbf24;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.explanation-content .markdown-content pre {
+    background-color: rgba(26, 32, 44, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.explanation-content .markdown-content pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+}
+
+.explanation-content .markdown-content strong {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.explanation-content .markdown-content em {
+    color: #a7f3d0;
+    font-style: italic;
+}
+
+.copy-code-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.copy-code-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 进度条样式 */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* 解决方案容器样式 */
+.solutions-wrapper {
+    min-height: 200px;
+}
+
+/* 新的布局适应 */
+.container-fluid {
+    max-width: 1400px;
+}
+
+/* 历史记录样式 */
+.history-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.history-item:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.history-item .history-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.history-item .history-problem {
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+}
+
+.history-item .history-meta {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.history-item .history-solutions {
+    margin-top: 0.75rem;
+}
+
+.history-solution-preview {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* 动画效果 */
+.solution-item {
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-12">
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold text-white mb-3">
-                    <i class="fas fa-lightbulb text-warning me-3"></i>
-                    <span class="text-gradient">作业求解</span>
-                </h1>
-                <p class="lead text-light">
-                    输入您的R语言作业题目，AI将生成详细的解决方案
-                </p>
-            </div>
+<div class="container-fluid py-3">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold text-white mb-2">
+                <i class="fas fa-lightbulb text-warning me-3"></i>
+                <span class="text-gradient">作业求解</span>
+            </h1>
+            <p class="lead text-light">
+                输入您的R语言作业题目，AI将生成详细的解决方案
+            </p>
         </div>
     </div>
 
-    <div class="row g-4">
-        <!-- 题目输入区域 -->
-        <div class="col-lg-6">
-            <div class="glass-effect rounded-4 p-4 h-100">
+    <!-- 输入区域 (上半部分) -->
+    <div class="row mb-4">
+        <!-- 题目输入 -->
+        <div class="col-lg-8">
+            <div class="glass-effect rounded-4 p-4">
                 <h4 class="text-white mb-3">
                     <i class="fas fa-edit text-warning me-2"></i>
                     输入作业题目
                 </h4>
                 
-                <form method="post" action="{% url 'core:answer' %}" enctype="multipart/form-data">
+                <form method="post" action="{% url 'core:answer' %}" enctype="multipart/form-data" id="answerForm">
                     {% csrf_token %}
                     <div class="mb-3">
                         <textarea 
                             class="form-control" 
                             name="problem" 
-                            rows="8" 
+                            rows="6" 
                             placeholder="请在此处输入您的R语言作业题目...
 
 示例：
@@ -202,33 +442,6 @@
                             required>{{ request.POST.problem|default_if_none:"" }}</textarea>
                     </div>
                     
-                    <!-- 文件上传区域 -->
-                    <div class="mb-3">
-                        <label class="form-label text-light">
-                            <i class="fas fa-paperclip me-2"></i>上传相关文件（可选）
-                        </label>
-                        <div class="file-upload-container">
-                            <input 
-                                type="file" 
-                                class="form-control" 
-                                name="uploaded_files" 
-                                multiple 
-                                accept=".csv,.txt,.xlsx,.xls,.r,.rmd,.json,.xml,.py,.js,.html,.css"
-                                id="fileInput">
-                            <div class="form-text text-muted">
-                                支持格式：CSV, TXT, Excel, R脚本, JSON, XML等。最多上传5个文件，单文件最大10MB。
-                            </div>
-                        </div>
-                        
-                        <!-- 文件预览区域 -->
-                        <div id="filePreview" class="mt-2" style="display: none;">
-                            <div class="border rounded-3 p-2 bg-dark bg-opacity-50">
-                                <small class="text-light">已选择的文件：</small>
-                                <div id="fileList" class="mt-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="include_comments" id="includeComments" checked>
@@ -236,7 +449,7 @@
                                 包含详细注释
                             </label>
                         </div>
-                        <button type="submit" class="btn btn-warning btn-lg">
+                        <button type="submit" class="btn btn-warning btn-lg" id="solveBtn">
                             <i class="fas fa-brain me-2"></i>
                             开始求解
                         </button>
@@ -245,15 +458,81 @@
             </div>
         </div>
 
-        <!-- 结果显示区域 -->
-        <div class="col-lg-6">
+        <!-- 文件上传区域 -->
+        <div class="col-lg-4">
             <div class="glass-effect rounded-4 p-4 h-100">
                 <h4 class="text-white mb-3">
-                    <i class="fas fa-code text-success me-2"></i>
-                    解决方案
+                    <i class="fas fa-paperclip text-info me-2"></i>
+                    上传文件
                 </h4>
                 
-                {% if solutions %}
+                <div class="file-upload-container">
+                    <input 
+                        type="file" 
+                        class="form-control" 
+                        name="uploaded_files" 
+                        multiple 
+                        accept=".csv,.txt,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.r,.rmd,.json,.xml,.py,.js,.html,.css"
+                        id="fileInput"
+                        form="answerForm">
+                    <div class="form-text text-muted mt-2">
+                        支持格式：CSV, TXT, Excel, Word, PowerPoint, R脚本, JSON, XML等。<br>
+                        最多上传5个文件，单文件最大10MB。
+                    </div>
+                </div>
+                
+                <!-- 文件预览区域 -->
+                <div id="filePreview" class="mt-3" style="display: none;">
+                    <div class="border rounded-3 p-2 bg-dark bg-opacity-50">
+                        <small class="text-light">
+                            <i class="fas fa-file me-1"></i>
+                            已选择的文件：
+                        </small>
+                        <div id="fileList" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果显示区域 (下半部分) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="glass-effect rounded-4 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-white mb-0">
+                        <i class="fas fa-code text-success me-2"></i>
+                        解决方案
+                        <span id="progressIndicator" class="badge bg-warning text-dark ms-2" style="display: none;">
+                            <i class="fas fa-spinner fa-spin me-1"></i>生成中...
+                        </span>
+                    </h4>
+                    
+                    <!-- 历史记录按钮 -->
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-light btn-sm" id="historyBtn" data-bs-toggle="modal" data-bs-target="#historyModal">
+                            <i class="fas fa-history me-1"></i>
+                            历史记录
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-sm" id="clearHistoryBtn">
+                            <i class="fas fa-trash me-1"></i>
+                            清空历史
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 进度条 -->
+                <div id="progressBar" class="mb-4" style="display: none;">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block" id="progressText">准备开始...</small>
+                </div>
+                
+                <!-- 实时解决方案显示区域 -->
+                <div id="solutionsContainer" class="solutions-wrapper">
+                    {% if solutions %}
                     {% if uploaded_files %}
                     <div class="mb-3">
                         <h6 class="text-info">
@@ -276,24 +555,92 @@
                     {% endif %}
                     
                     {% for solution in solutions %}
-                    <div class="mb-4 solution-content">
-                        <h5 class="text-primary">{{ solution.title }}</h5>
-                        <pre><code class="language-r">{{ solution.code }}</code></pre>
-                        <div class="explanation-content">
-                            {{ solution.explanation|markdown_safe }}
+                    <div class="mb-4 solution-item" data-solution="{{ forloop.counter }}">
+                        <div class="solution-header bg-primary bg-opacity-20 rounded-3 p-3 mb-3">
+                            <h5 class="text-warning mb-1">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                解决方案 {{ forloop.counter }}
+                            </h5>
+                            <h6 class="text-white mb-0">{{ solution.title }}</h6>
                         </div>
+                        
+                        <!-- 代码区域 - 增强显示 -->
+                        <div class="code-section mb-3">
+                            <div class="code-header d-flex justify-content-between align-items-center bg-dark bg-opacity-50 px-3 py-2 rounded-top">
+                                <span class="text-light">
+                                    <i class="fab fa-r-project me-2 text-info"></i>
+                                    R代码
+                                </span>
+                                <button class="btn btn-outline-light btn-sm copy-code-btn" 
+                                        data-code="{{ solution.code|escape }}">
+                                    <i class="fas fa-copy me-1"></i>复制
+                                </button>
+                            </div>
+                            <div class="code-content">
+                                <pre class="mb-0"><code class="language-r">{{ solution.code }}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- 解释内容 -->
+                        <div class="explanation-section bg-secondary bg-opacity-20 rounded-3 p-3">
+                            <h6 class="text-info mb-2">
+                                <i class="fas fa-info-circle me-2"></i>
+                                详细解释
+                            </h6>
+                            <div class="explanation-content">
+                                {{ solution.explanation|markdown_safe }}
+                            </div>
+                        </div>
+                        
                         {% if solution.filename %}
-                        <small class="text-muted">建议文件名: {{ solution.filename }}</small>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-file-code me-1"></i>
+                                建议文件名: <code class="text-warning">{{ solution.filename }}</code>
+                            </small>
+                        </div>
                         {% endif %}
                     </div>
-                    {% if not forloop.last %}<hr class="border-secondary">{% endif %}
+                    {% if not forloop.last %}<hr class="border-secondary my-4">{% endif %}
                     {% endfor %}
                 {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center text-muted py-5" id="emptyState">
                         <i class="fas fa-lightbulb fa-3x mb-3 opacity-50"></i>
-                        <p>请在左侧输入作业题目，然后点击"开始求解"</p>
+                        <p class="mb-0">请在上方输入作业题目，然后点击"开始求解"</p>
+                        <small class="text-muted">解决方案将在此处动态展示</small>
                     </div>
                 {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史记录模态框 -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white" id="historyModalLabel">
+                        <i class="fas fa-history me-2"></i>
+                        作业求解历史记录
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div id="historyContent">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-warning"></i>
+                            <p class="text-light mt-2">加载历史记录...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-danger" id="clearAllHistoryBtn">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        清空所有记录
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
             </div>
         </div>
     </div>
@@ -340,14 +687,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('fileInput');
     const filePreview = document.getElementById('filePreview');
     const fileList = document.getElementById('fileList');
+    const solveBtn = document.getElementById('solveBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressIndicator = document.getElementById('progressIndicator');
+    const progressText = document.getElementById('progressText');
+    const solutionsContainer = document.getElementById('solutionsContainer');
+    const emptyState = document.getElementById('emptyState');
+    
     let selectedFiles = [];
+    let isGenerating = false;
+
+    // 更新文件输入支持Office文件
+    fileInput.setAttribute('accept', '.csv,.txt,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.r,.rmd,.json,.xml,.py,.js,.html,.css');
 
     fileInput.addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
         
         // 验证文件数量
         if (files.length > 5) {
-            alert('最多只能上传5个文件');
+            showToast('最多只能上传5个文件', 'warning');
             e.target.value = '';
             return;
         }
@@ -356,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const maxSize = 10 * 1024 * 1024; // 10MB
         for (let file of files) {
             if (file.size > maxSize) {
-                alert(`文件 "${file.name}" 大小超过10MB，请选择较小的文件`);
+                showToast(`文件 "${file.name}" 大小超过10MB，请选择较小的文件`, 'error');
                 e.target.value = '';
                 return;
             }
@@ -365,6 +723,236 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFiles = files;
         updateFilePreview();
     });
+
+    // 表单提交处理
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (isGenerating) {
+            e.preventDefault();
+            return;
+        }
+        
+        const problem = document.querySelector('textarea[name="problem"]').value.trim();
+        if (!problem) {
+            e.preventDefault();
+            showToast('请输入作业题目', 'warning');
+            return;
+        }
+        
+        // 开始生成状态
+        startGeneration();
+        
+        // 使用AJAX提交表单以支持流式更新
+        e.preventDefault();
+        submitFormWithStreaming();
+    });
+
+    function startGeneration() {
+        isGenerating = true;
+        solveBtn.disabled = true;
+        solveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>生成中...';
+        
+        progressBar.style.display = 'block';
+        progressIndicator.style.display = 'inline-block';
+        
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+        
+        // 清空之前的解决方案
+        const existingSolutions = solutionsContainer.querySelectorAll('.solution-item');
+        existingSolutions.forEach(item => item.remove());
+        
+        updateProgress(10, '正在分析题目...');
+    }
+
+    function submitFormWithStreaming() {
+        const formData = new FormData(document.querySelector('form'));
+        
+        // 使用EventSource进行流式通信
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{% url "core:answer_stream" %}', true);
+        
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 20; // 上传占20%
+                updateProgress(percentComplete, '上传文件中...');
+            }
+        };
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.session_id) {
+                        startStreamingUpdates(response.session_id);
+                    }
+                } else {
+                    endGeneration();
+                    showToast('提交失败，请稍后重试', 'error');
+                }
+            }
+        };
+        
+        xhr.send(formData);
+    }
+
+    function startStreamingUpdates(sessionId) {
+        updateProgress(30, '开始生成解决方案...');
+        
+        // 模拟流式更新（实际应该使用Server-Sent Events或WebSocket）
+        let currentSolution = 1;
+        const maxSolutions = 3;
+        
+        function generateNextSolution() {
+            if (currentSolution > maxSolutions) {
+                endGeneration();
+                return;
+            }
+            
+            const progress = 30 + (currentSolution - 1) * 20;
+            updateProgress(progress, `正在生成解决方案 ${currentSolution}...`);
+            
+            // 模拟异步生成
+            setTimeout(() => {
+                addSolutionPlaceholder(currentSolution);
+                
+                // 模拟解决方案内容加载
+                setTimeout(() => {
+                    loadSolutionContent(currentSolution, sessionId);
+                    currentSolution++;
+                    
+                    if (currentSolution <= maxSolutions) {
+                        setTimeout(generateNextSolution, 1000);
+                    } else {
+                        updateProgress(100, '全部解决方案生成完成！');
+                        setTimeout(endGeneration, 1000);
+                    }
+                }, 2000);
+                
+            }, 1000);
+        }
+        
+        generateNextSolution();
+    }
+
+    function addSolutionPlaceholder(solutionNum) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'mb-4 solution-item fade-in';
+        placeholder.id = `solution-${solutionNum}`;
+        placeholder.innerHTML = `
+            <div class="solution-header bg-primary bg-opacity-20 rounded-3 p-3 mb-3">
+                <h5 class="text-warning mb-1">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    解决方案 ${solutionNum}
+                </h5>
+                <h6 class="text-white mb-0">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    正在生成...
+                </h6>
+            </div>
+            <div class="code-section mb-3">
+                <div class="code-header d-flex justify-content-between align-items-center bg-dark bg-opacity-50 px-3 py-2 rounded-top">
+                    <span class="text-light">
+                        <i class="fab fa-r-project me-2 text-info"></i>
+                        R代码
+                    </span>
+                </div>
+                <div class="code-content">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">生成中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        solutionsContainer.appendChild(placeholder);
+        placeholder.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function loadSolutionContent(solutionNum, sessionId) {
+        // 这里应该从服务器获取实际的解决方案内容
+        // 现在使用占位符内容
+        const solutionElement = document.getElementById(`solution-${solutionNum}`);
+        if (solutionElement) {
+            // 模拟加载解决方案内容
+            setTimeout(() => {
+                // 这里应该替换为从服务器获取的实际内容
+                updateSolutionContent(solutionElement, {
+                    title: `数据分析方案 ${solutionNum}`,
+                    code: `# 解决方案 ${solutionNum}\nlibrary(ggplot2)\ndata(mtcars)\nplot(mtcars$wt, mtcars$mpg)`,
+                    explanation: `这是解决方案 ${solutionNum} 的详细解释...`
+                });
+            }, 500);
+        }
+    }
+
+    function updateSolutionContent(element, solution) {
+        element.innerHTML = `
+            <div class="solution-header bg-primary bg-opacity-20 rounded-3 p-3 mb-3">
+                <h5 class="text-warning mb-1">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    解决方案 ${element.id.split('-')[1]}
+                </h5>
+                <h6 class="text-white mb-0">${solution.title}</h6>
+            </div>
+            
+            <div class="code-section mb-3">
+                <div class="code-header d-flex justify-content-between align-items-center bg-dark bg-opacity-50 px-3 py-2 rounded-top">
+                    <span class="text-light">
+                        <i class="fab fa-r-project me-2 text-info"></i>
+                        R代码
+                    </span>
+                    <button class="btn btn-outline-light btn-sm copy-code-btn" 
+                            data-code="${solution.code}">
+                        <i class="fas fa-copy me-1"></i>复制
+                    </button>
+                </div>
+                <div class="code-content">
+                    <pre class="mb-0"><code class="language-r">${solution.code}</code></pre>
+                </div>
+            </div>
+            
+            <div class="explanation-section bg-secondary bg-opacity-20 rounded-3 p-3">
+                <h6 class="text-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    详细解释
+                </h6>
+                <div class="explanation-content">
+                    <p>${solution.explanation}</p>
+                </div>
+            </div>
+        `;
+        
+        // 重新高亮代码
+        if (window.Prism) {
+            Prism.highlightAllUnder(element);
+        }
+        
+        // 绑定复制按钮事件
+        const copyBtn = element.querySelector('.copy-code-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                copyToClipboard(this.dataset.code);
+            });
+        }
+    }
+
+    function updateProgress(percent, text) {
+        const progressBarFill = document.querySelector('.progress-bar');
+        progressBarFill.style.width = percent + '%';
+        progressText.textContent = text;
+    }
+
+    function endGeneration() {
+        isGenerating = false;
+        solveBtn.disabled = false;
+        solveBtn.innerHTML = '<i class="fas fa-brain me-2"></i>开始求解';
+        
+        progressBar.style.display = 'none';
+        progressIndicator.style.display = 'none';
+    }
 
     function updateFilePreview() {
         if (selectedFiles.length === 0) {
@@ -404,6 +992,10 @@ document.addEventListener('DOMContentLoaded', function() {
             'txt': 'fas fa-file-alt',
             'xlsx': 'fas fa-file-excel',
             'xls': 'fas fa-file-excel',
+            'docx': 'fas fa-file-word',
+            'doc': 'fas fa-file-word',
+            'pptx': 'fas fa-file-powerpoint',
+            'ppt': 'fas fa-file-powerpoint',
             'r': 'fas fa-file-code',
             'rmd': 'fas fa-file-code',
             'json': 'fas fa-file-code',
@@ -424,6 +1016,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('代码已复制到剪贴板', 'success');
+        }, function() {
+            showToast('复制失败，请手动复制', 'error');
+        });
+    }
+
+    function showToast(message, type = 'info') {
+        // 简单的toast通知实现
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'warning'} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check' : 'info-circle'} me-2"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
     // 全局函数，供HTML调用
     window.removeFile = function(index) {
         selectedFiles.splice(index, 1);
@@ -435,6 +1052,241 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateFilePreview();
     };
+
+    // 页面加载完成后绑定复制按钮事件
+    document.querySelectorAll('.copy-code-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            copyToClipboard(this.dataset.code);
+        });
+    });
+
+    // 历史记录功能
+    const historyBtn = document.getElementById('historyBtn');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
+    const historyContent = document.getElementById('historyContent');
+    
+    // 加载历史记录
+    function loadHistory() {
+        historyContent.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-2x text-warning"></i>
+                <p class="text-light mt-2">加载历史记录...</p>
+            </div>
+        `;
+        
+        fetch('/api/history/answer/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.history.length > 0) {
+                    displayHistory(data.history);
+                } else {
+                    historyContent.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-light">暂无历史记录</h5>
+                            <p class="text-muted">开始使用作业求解功能后，历史记录将显示在这里</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('加载历史记录失败:', error);
+                historyContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                        <p class="text-light">加载历史记录失败</p>
+                        <button class="btn btn-outline-warning btn-sm" onclick="loadHistory()">重试</button>
+                    </div>
+                `;
+            });
+    }
+    
+    // 显示历史记录
+    function displayHistory(historyList) {
+        let historyHtml = '';
+        
+        historyList.forEach((record, index) => {
+            const createdAt = new Date(record.created_at).toLocaleString('zh-CN');
+            const solutionsCount = record.solutions ? record.solutions.length : 0;
+            const filesCount = record.uploaded_files ? record.uploaded_files.length : 0;
+            
+            historyHtml += `
+                <div class="history-item" data-record-id="${record.id}">
+                    <div class="history-header">
+                        <div class="flex-grow-1">
+                            <div class="history-problem">
+                                <i class="fas fa-question-circle text-warning me-2"></i>
+                                ${record.input_content.substring(0, 100)}${record.input_content.length > 100 ? '...' : ''}
+                            </div>
+                            <div class="history-meta">
+                                <i class="fas fa-calendar me-1"></i>
+                                ${createdAt}
+                                <span class="ms-3">
+                                    <i class="fas fa-code me-1"></i>
+                                    ${solutionsCount} 个解决方案
+                                </span>
+                                ${filesCount > 0 ? `
+                                <span class="ms-3">
+                                    <i class="fas fa-paperclip me-1"></i>
+                                    ${filesCount} 个文件
+                                </span>
+                                ` : ''}
+                                <span class="ms-3 ${record.success ? 'text-success' : 'text-danger'}">
+                                    <i class="fas fa-${record.success ? 'check-circle' : 'times-circle'} me-1"></i>
+                                    ${record.success ? '成功' : '失败'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-info btn-sm" onclick="viewHistoryDetail('${record.id}')">
+                                <i class="fas fa-eye me-1"></i>
+                                查看详情
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="reuseHistoryProblem('${record.id}')">
+                                <i class="fas fa-redo me-1"></i>
+                                重用
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteHistoryRecord('${record.id}')">
+                                <i class="fas fa-trash me-1"></i>
+                                删除
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${record.solutions && record.solutions.length > 0 ? `
+                    <div class="history-solutions">
+                        <small class="text-info">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            解决方案预览:
+                        </small>
+                        ${record.solutions.slice(0, 2).map(solution => `
+                            <div class="history-solution-preview">
+                                <strong class="text-warning">${solution.title}</strong>
+                                <pre class="mt-1 mb-0"><code class="text-light">${solution.code.substring(0, 100)}${solution.code.length > 100 ? '...' : ''}</code></pre>
+                            </div>
+                        `).join('')}
+                        ${record.solutions.length > 2 ? `
+                            <small class="text-muted">还有 ${record.solutions.length - 2} 个解决方案...</small>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        historyContent.innerHTML = historyHtml;
+    }
+    
+    // 查看历史详情
+    window.viewHistoryDetail = function(recordId) {
+        // 在新窗口打开历史详情页
+        window.open(`/history/${recordId}/`, '_blank');
+    };
+    
+    // 重用历史问题
+    window.reuseHistoryProblem = function(recordId) {
+        fetch(`/api/history/answer/${recordId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 填充问题内容
+                    document.querySelector('textarea[name="problem"]').value = data.record.input_content;
+                    
+                    // 关闭模态框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'));
+                    modal.hide();
+                    
+                    // 显示提示
+                    showToast('题目已填入，您可以修改后重新求解', 'success');
+                    
+                    // 滚动到顶部
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    showToast('加载历史记录失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('重用历史记录失败:', error);
+                showToast('操作失败，请重试', 'error');
+            });
+    };
+    
+    // 删除历史记录
+    window.deleteHistoryRecord = function(recordId) {
+        if (confirm('确定要删除这条历史记录吗？')) {
+            fetch(`/api/history/answer/${recordId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('历史记录已删除', 'success');
+                    loadHistory(); // 重新加载历史记录
+                } else {
+                    showToast('删除失败，请重试', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('删除历史记录失败:', error);
+                showToast('删除失败，请重试', 'error');
+            });
+        }
+    };
+    
+    // 绑定历史记录按钮事件
+    if (historyBtn) {
+        historyBtn.addEventListener('click', loadHistory);
+    }
+    
+    // 清空历史记录
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', function() {
+            if (confirm('确定要清空当前会话的所有历史记录吗？')) {
+                clearHistory('session');
+            }
+        });
+    }
+    
+    if (clearAllHistoryBtn) {
+        clearAllHistoryBtn.addEventListener('click', function() {
+            if (confirm('确定要清空所有历史记录吗？此操作不可恢复！')) {
+                clearHistory('all');
+            }
+        });
+    }
+    
+    function clearHistory(type) {
+        fetch('/api/history/clear/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ type: type })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('历史记录已清空', 'success');
+                if (type === 'all') {
+                    // 关闭模态框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'));
+                    if (modal) modal.hide();
+                }
+                loadHistory(); // 重新加载历史记录
+            } else {
+                showToast('清空失败，请重试', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('清空历史记录失败:', error);
+            showToast('清空失败，请重试', 'error');
+        });
+    }
 });
 </script>
 {% endblock %}
