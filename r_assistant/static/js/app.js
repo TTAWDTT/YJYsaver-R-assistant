@@ -8,6 +8,7 @@ class RAssistantApp {
         this.apiBaseUrl = '/api';
         this.loadingModal = null;
         this.toastContainer = null;
+        this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         this.init();
     }
 
@@ -21,6 +22,10 @@ class RAssistantApp {
 
     // 初始化粒子背景
     setupParticles() {
+        if (this.prefersReducedMotion) {
+            return;
+        }
+
         if (typeof particlesJS !== 'undefined') {
             particlesJS('particles-js', {
                 particles: {
@@ -309,14 +314,19 @@ class RAssistantApp {
     // 设置滚动效果
     setupScrollEffects() {
         // 导航栏滚动效果
+        let ticking = false;
         window.addEventListener('scroll', () => {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
+            if (ticking) return;
+            ticking = true;
+
+            window.requestAnimationFrame(() => {
+                const navbar = document.querySelector('.navbar');
+                if (navbar) {
+                    navbar.classList.toggle('scrolled', window.scrollY > 50);
+                }
+                ticking = false;
+            });
+        }, { passive: true });
 
         // 元素进入视图动画
         this.setupIntersectionObserver();
@@ -324,22 +334,55 @@ class RAssistantApp {
 
     // 设置交叉观察器
     setupIntersectionObserver() {
+        const animateElements = document.querySelectorAll('[data-reveal], .feature-card, .tech-card, .step-item, .stat-item, .demo-chat, .quickstart-section .step-item');
+
+        if (animateElements.length === 0) {
+            return;
+        }
+
+        document.body.classList.add('reveal-ready');
+
+        animateElements.forEach(el => {
+            if (!el.classList.contains('reveal')) {
+                el.classList.add('reveal');
+            }
+        });
+
+        if (!('IntersectionObserver' in window)) {
+            animateElements.forEach(el => el.classList.add('is-visible'));
+            return;
+        }
+
+        if (this.prefersReducedMotion) {
+            animateElements.forEach(el => el.classList.add('is-visible'));
+            return;
+        }
+
         const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            threshold: 0.15,
+            rootMargin: '0px 0px -40px 0px'
         };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-fade-in');
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
-        // 观察需要动画的元素
-        const animateElements = document.querySelectorAll('.feature-card, .tech-card, .step-item');
         animateElements.forEach(el => observer.observe(el));
+
+        // 确保初始视窗中的元素立即可见
+        requestAnimationFrame(() => {
+            animateElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    el.classList.add('is-visible');
+                }
+            });
+        });
     }
 
     // API请求辅助方法

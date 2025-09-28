@@ -3,7 +3,7 @@
 {% block title %}历史记录 - R语言智能助手{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" data-history-root>
     <div class="row">
         <div class="col-12">
             <div class="text-center mb-5">
@@ -18,21 +18,23 @@
         </div>
     </div>
 
-    <!-- 筛选选项 -->
+    <!-- 控制台 -->
     <div class="row mb-4">
-        <div class="col-lg-8 mx-auto">
-            <div class="glass-effect rounded-4 p-3">
-                <form method="get" class="row g-3">
-                    <div class="col-md-4">
-                        <select class="form-select" name="request_type">
+        <div class="col-12">
+            <div class="history-controls glass-effect rounded-4 p-4">
+                <form method="get" class="row g-3 align-items-end history-filter-form">
+                    <div class="col-md-3">
+                        <label class="form-label text-light small fw-semibold">请求类型</label>
+                        <select class="form-select form-select-sm" name="request_type">
                             <option value="">所有类型</option>
                             <option value="explain" {% if request.GET.request_type == 'explain' %}selected{% endif %}>代码解释</option>
                             <option value="answer" {% if request.GET.request_type == 'answer' %}selected{% endif %}>作业求解</option>
                             <option value="talk" {% if request.GET.request_type == 'talk' %}selected{% endif %}>智能对话</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <select class="form-select" name="date_range">
+                    <div class="col-md-3">
+                        <label class="form-label text-light small fw-semibold">时间范围</label>
+                        <select class="form-select form-select-sm" name="date_range">
                             <option value="">所有时间</option>
                             <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>今天</option>
                             <option value="week" {% if request.GET.date_range == 'week' %}selected{% endif %}>本周</option>
@@ -40,128 +42,266 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>筛选
-                            </button>
-                            <a href="{% url 'core:history' %}" class="btn btn-outline-light">
-                                <i class="fas fa-refresh me-2"></i>重置
-                            </a>
+                        <label class="form-label text-light small fw-semibold">关键词搜索</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-transparent text-light border-secondary">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control border-secondary text-light" name="keyword" value="{{ request.GET.keyword|default:'' }}" placeholder="输入关键字匹配请求或回复">
                         </div>
                     </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-1"></i>筛选
+                        </button>
+                        <a href="{% url 'core:history' %}" class="btn btn-outline-light w-100">
+                            <i class="fas fa-rotate me-1"></i>重置
+                        </a>
+                    </div>
                 </form>
+                <div class="history-aux d-flex flex-wrap align-items-center gap-3 mt-4">
+                    <div class="form-check form-switch text-light">
+                        <input class="form-check-input" type="checkbox" role="switch" id="historySelectAll" data-select-all>
+                        <label class="form-check-label small" for="historySelectAll">全选当前页</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-2" data-export-selected disabled>
+                        <i class="fas fa-file-export"></i><span>导出选中</span>
+                        <span class="badge text-bg-info" data-selected-count>0</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2" data-theme-panel-trigger>
+                        <i class="fas fa-sliders-h"></i><span>主题偏好</span>
+                    </button>
+                    <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
+                        <span class="badge rounded-pill text-bg-secondary opacity-75">共 {{ page_obj.paginator.count }} 条</span>
+                        <span class="badge rounded-pill text-bg-dark">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 历史记录列表 -->
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            {% for record in history_records %}
-            <div class="glass-effect rounded-4 p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center">
-                        {% if record.request_type == 'explain' %}
-                        <i class="fas fa-code text-primary fa-2x me-3"></i>
-                        <div>
-                            <h5 class="text-white mb-1">代码解释</h5>
-                            <small class="text-muted">分析R语言代码</small>
+    {% if history_records %}
+    <div class="history-masonry" data-history-masonry>
+        {% for record in history_records %}
+    {% with counter=forloop.counter|stringformat:"s" %}
+    <article class="history-card glass-effect" data-record-id="{{ record.id }}"
+         data-status="{% if record.success %}success{% elif record.error_message %}error{% else %}unknown{% endif %}"
+         data-request-type="{{ record.request_type }}"
+         data-created-at="{{ record.created_at|date:"c" }}"
+         data-processing-time="{{ record.processing_time|default_if_none:'' }}"
+         data-error-message="{{ record.error_message|default_if_none:''|escape }}">
+            <div class="history-card-select form-check">
+                <input class="form-check-input" type="checkbox" value="{{ record.id }}" id="select-{{ record.id }}" data-select-record>
+            </div>
+            <details class="history-card-details" data-history-details>
+                <summary>
+                    <div class="history-card-summary">
+                        <div class="history-card-icon">
+                            {% if record.request_type == 'explain' %}
+                            <i class="fas fa-code"></i>
+                            {% elif record.request_type == 'answer' %}
+                            <i class="fas fa-lightbulb"></i>
+                            {% elif record.request_type == 'talk' %}
+                            <i class="fas fa-comments"></i>
+                            {% else %}
+                            <i class="fas fa-circle-question"></i>
+                            {% endif %}
                         </div>
-                        {% elif record.request_type == 'answer' %}
-                        <i class="fas fa-lightbulb text-warning fa-2x me-3"></i>
-                        <div>
-                            <h5 class="text-white mb-1">作业求解</h5>
-                            <small class="text-muted">问题解答</small>
+                        <div class="history-card-info">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge rounded-pill bg-opacity-25 history-badge-type history-type-{{ record.request_type }}">
+                                    {% if record.request_type == 'explain' %}代码解释{% elif record.request_type == 'answer' %}作业求解{% elif record.request_type == 'talk' %}智能对话{% else %}其他{% endif %}
+                                </span>
+                                <span class="history-card-time text-muted small">
+                                    {{ record.created_at|date:"Y年m月d日 H:i" }}
+                                </span>
+                                <span class="badge rounded-pill history-status history-status-{% if record.success %}success{% elif record.error_message %}error{% else %}unknown{% endif %}">
+                                    {% if record.success %}成功{% elif record.error_message %}失败{% else %}未知{% endif %}
+                                </span>
+                            </div>
+                            <div class="history-card-preview text-truncate">
+                                {% if record.request_type == 'explain' %}
+                                {{ record.input_content|default_if_none:""|truncatechars:120 }}
+                                {% else %}
+                                {{ record.input_content|striptags|default_if_none:""|truncatechars:120 }}
+                                {% endif %}
+                            </div>
                         </div>
-                        {% elif record.request_type == 'talk' %}
-                        <i class="fas fa-comments text-success fa-2x me-3"></i>
-                        <div>
-                            <h5 class="text-white mb-1">智能对话</h5>
-                            <small class="text-muted">AI对话交流</small>
+                        <div class="history-card-meta text-end">
+                            <span class="text-muted small d-block mb-1">
+                                <i class="fas fa-stopwatch me-1"></i>{% if record.processing_time %}{{ record.processing_time|floatformat:2 }} 秒{% else %}耗时未知{% endif %}
+                            </span>
+                            <span class="text-muted small"><i class="fas fa-angle-down"></i> 查看详情</span>
                         </div>
-                        {% endif %}
                     </div>
-                    <div class="text-end">
-                        <small class="text-light">{{ record.created_at|date:"Y年m月d日 H:i" }}</small>
-                        <br>
-                        <span class="badge {% if record.status == 'success' %}bg-success{% elif record.status == 'error' %}bg-danger{% else %}bg-warning{% endif %}">
-                            {% if record.status == 'success' %}成功
-                            {% elif record.status == 'error' %}失败
-                            {% else %}处理中{% endif %}
+                </summary>
+                <div class="history-card-body">
+                    <div class="history-card-sections">
+                        <section class="history-section">
+                            <header class="history-section-header">
+                                <h6><i class="fas fa-user me-2"></i>输入内容</h6>
+                                <button type="button" class="btn btn-sm btn-outline-light" data-copy-target="#input-content-{{ counter }}">
+                                    <i class="fas fa-copy me-1"></i>复制
+                                </button>
+                            </header>
+                            <div class="history-section-body" id="input-content-{{ counter }}">
+                                {% if record.request_type == 'explain' %}
+                                <pre class="text-light mb-0" style="white-space: pre-wrap;"><code class="language-r">{{ record.input_content|default_if_none:""|escape }}</code></pre>
+                                {% else %}
+                                <div class="text-light">{{ record.input_content|default_if_none:""|linebreaksbr }}</div>
+                                {% endif %}
+                            </div>
+                        </section>
+                        <section class="history-section">
+                            <header class="history-section-header">
+                                <h6><i class="fas fa-robot me-2"></i>AI回复</h6>
+                                <button type="button" class="btn btn-sm btn-outline-light" data-copy-target="#output-content-{{ counter }}" {% if not record.response_content %}disabled{% endif %}>
+                                    <i class="fas fa-copy me-1"></i>复制
+                                </button>
+                            </header>
+                            <div class="history-section-body" id="output-content-{{ counter }}">
+                                {% if record.response_content %}
+                                <div class="text-light">{{ record.response_content|linebreaksbr }}</div>
+                                {% else %}
+                                <p class="text-muted mb-0">暂无回复内容</p>
+                                {% endif %}
+                            </div>
+                        </section>
+                        <section class="history-section">
+                            <header class="history-section-header">
+                                <h6><i class="fas fa-database me-2"></i>调试信息</h6>
+                            </header>
+                            <dl class="row g-2 text-light small mb-0">
+                                <dt class="col-4">请求ID</dt>
+                                <dd class="col-8">{{ record.id }}</dd>
+                                <dt class="col-4">类型</dt>
+                                <dd class="col-8">{{ record.request_type|default:"--" }}</dd>
+                                <dt class="col-4">创建时间</dt>
+                                <dd class="col-8">{{ record.created_at|date:"Y-m-d H:i:s" }}</dd>
+                                <dt class="col-4">耗时</dt>
+                                <dd class="col-8">{% if record.processing_time %}{{ record.processing_time|floatformat:2 }} 秒{% else %}--{% endif %}</dd>
+                                <dt class="col-4">错误信息</dt>
+                                <dd class="col-8">{% if record.error_message %}{{ record.error_message }}{% else %}--{% endif %}</dd>
+                            </dl>
+                            <div class="history-section-actions d-flex flex-wrap gap-2 mt-3">
+                                {% if record.request_type == 'explain' %}
+                                <a href="{% url 'core:explain' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-rotate-left me-1"></i>重新解释
+                                </a>
+                                {% elif record.request_type == 'answer' %}
+                                <a href="{% url 'core:answer' %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-arrow-rotate-left me-1"></i>重新求解
+                                </a>
+                                {% elif record.request_type == 'talk' %}
+                                <a href="{% url 'core:talk' %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-arrow-rotate-left me-1"></i>继续对话
+                                </a>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-info" data-export-single>
+                                    <i class="fas fa-file-export me-1"></i>导出单条
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                    {% if record.error_message %}
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-0 text-light mt-3">
+                        <i class="fas fa-circle-exclamation me-2"></i>{{ record.error_message }}
+                    </div>
+                    {% endif %}
+                </div>
+            </details>
+        </article>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-effect rounded-4 p-5 text-center">
+        <i class="fas fa-inbox fa-4x text-muted mb-4"></i>
+        <h4 class="text-white mb-3">暂无历史记录</h4>
+        <p class="text-light mb-4">开始使用R语言助手，记录会自动保存在这里</p>
+        <div class="btn-group" role="group">
+            <a href="{% url 'core:explain' %}" class="btn btn-primary">
+                <i class="fas fa-code me-2"></i>代码解释
+            </a>
+            <a href="{% url 'core:answer' %}" class="btn btn-warning">
+                <i class="fas fa-lightbulb me-2"></i>作业求解
+            </a>
+            <a href="{% url 'core:talk' %}" class="btn btn-success">
+                <i class="fas fa-comments me-2"></i>智能对话
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if history_payloads %}
+    {{ history_payloads|json_script:'history-payloads' }}
+    {% endif %}
+
+    <!-- 主题定制面板 -->
+    <div class="history-theme-panel glass-effect rounded-4 p-4" id="historyThemePanel" hidden>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="text-white mb-1">历史记录主题</h5>
+                <p class="text-muted small mb-0">选择喜欢的配色与密度，界面偏好会自动保存。</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-light" data-theme-panel-close>
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="history-theme-options">
+                    <button type="button" class="history-theme-option" data-history-theme-value="classic">
+                        <span class="theme-sample theme-classic"></span>
+                        <span class="theme-meta">
+                            <strong>经典蓝紫</strong>
+                            <small>沿用默认渐变层次</small>
                         </span>
-                    </div>
+                    </button>
+                    <button type="button" class="history-theme-option" data-history-theme-value="minimal">
+                        <span class="theme-sample theme-minimal"></span>
+                        <span class="theme-meta">
+                            <strong>极简冷白</strong>
+                            <small>干净、轻描淡写的亮色</small>
+                        </span>
+                    </button>
+                    <button type="button" class="history-theme-option" data-history-theme-value="blossom">
+                        <span class="theme-sample theme-blossom"></span>
+                        <span class="theme-meta">
+                            <strong>星云粉潮</strong>
+                            <small>粉色渐变与柔和光晕</small>
+                        </span>
+                    </button>
+                    <button type="button" class="history-theme-option" data-history-theme-value="mint">
+                        <span class="theme-sample theme-mint"></span>
+                        <span class="theme-meta">
+                            <strong>薄荷青林</strong>
+                            <small>绿松石与薄荷的清新组合</small>
+                        </span>
+                    </button>
+                    <button type="button" class="history-theme-option" data-history-theme-value="sunset">
+                        <span class="theme-sample theme-sunset"></span>
+                        <span class="theme-meta">
+                            <strong>暮光橙霞</strong>
+                            <small>温暖的橘粉日落调</small>
+                        </span>
+                    </button>
                 </div>
-
-                <!-- 用户输入 -->
-                <div class="mb-3">
-                    <h6 class="text-info mb-2">
-                        <i class="fas fa-user me-2"></i>您的输入：
-                    </h6>
-                    <div class="bg-dark bg-opacity-25 rounded p-3">
-                        {% if record.request_type == 'explain' and record.user_input %}
-                        <pre class="text-light mb-0" style="white-space: pre-wrap;"><code class="language-r">{{ record.user_input }}</code></pre>
-                        {% else %}
-                        <p class="text-light mb-0">{{ record.user_input|linebreaks }}</p>
-                        {% endif %}
+            </div>
+            <div class="col-12">
+                <label class="form-label text-light small fw-semibold">密度与布局</label>
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="form-check form-switch text-light">
+                        <input class="form-check-input" type="checkbox" role="switch" id="historyCompactToggle" data-history-compact>
+                        <label class="form-check-label" for="historyCompactToggle">紧凑模式</label>
                     </div>
-                </div>
-
-                <!-- AI回复 -->
-                {% if record.ai_response %}
-                <div class="mb-3">
-                    <h6 class="text-success mb-2">
-                        <i class="fas fa-robot me-2"></i>AI回复：
-                    </h6>
-                    <div class="bg-dark bg-opacity-25 rounded p-3">
-                        <div class="text-light">{{ record.ai_response|linebreaks }}</div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 操作按钮 -->
-                <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary">
-                    <div class="text-muted small">
-                        <i class="fas fa-clock me-1"></i>
-                        耗时: {{ record.response_time|floatformat:2 }}秒
-                        {% if record.tokens_used %}
-                        | <i class="fas fa-microchip me-1"></i>消耗Tokens: {{ record.tokens_used }}
-                        {% endif %}
-                    </div>
-                    <div>
-                        {% if record.request_type == 'explain' %}
-                        <a href="{% url 'core:explain' %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-redo me-1"></i>重新解释
-                        </a>
-                        {% elif record.request_type == 'answer' %}
-                        <a href="{% url 'core:answer' %}" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-redo me-1"></i>重新求解
-                        </a>
-                        {% elif record.request_type == 'talk' %}
-                        <a href="{% url 'core:talk' %}" class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-redo me-1"></i>继续对话
-                        </a>
-                        {% endif %}
+                    <div class="form-check form-switch text-light">
+                        <input class="form-check-input" type="checkbox" role="switch" id="historyAutoOpenToggle" data-history-auto-open>
+                        <label class="form-check-label" for="historyAutoOpenToggle">自动展开最新记录</label>
                     </div>
                 </div>
             </div>
-            {% empty %}
-            <div class="glass-effect rounded-4 p-5 text-center">
-                <i class="fas fa-inbox fa-4x text-muted mb-4"></i>
-                <h4 class="text-white mb-3">暂无历史记录</h4>
-                <p class="text-light mb-4">开始使用R语言助手，记录会自动保存在这里</p>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'core:explain' %}" class="btn btn-primary">
-                        <i class="fas fa-code me-2"></i>代码解释
-                    </a>
-                    <a href="{% url 'core:answer' %}" class="btn btn-warning">
-                        <i class="fas fa-lightbulb me-2"></i>作业求解
-                    </a>
-                    <a href="{% url 'core:talk' %}" class="btn btn-success">
-                        <i class="fas fa-comments me-2"></i>智能对话
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
         </div>
     </div>
 
@@ -217,11 +357,265 @@
 </div>
 
 <script>
-// 代码高亮
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof Prism !== 'undefined') {
         Prism.highlightAll();
     }
+
+    const root = document.querySelector('[data-history-root]');
+    const grid = document.querySelector('[data-history-masonry]');
+    const selectAll = document.querySelector('[data-select-all]');
+    const exportButton = document.querySelector('[data-export-selected]');
+    const selectedBadge = document.querySelector('[data-selected-count]');
+    const themePanelTrigger = document.querySelector('[data-theme-panel-trigger]');
+    const themePanel = document.getElementById('historyThemePanel');
+    const themePanelClose = themePanel?.querySelector('[data-theme-panel-close]');
+    const themeOptions = themePanel?.querySelectorAll('[data-history-theme-value]') || [];
+    const compactToggle = themePanel?.querySelector('[data-history-compact]');
+    const autoOpenToggle = themePanel?.querySelector('[data-history-auto-open]');
+    const payloadScript = document.getElementById('history-payloads');
+
+    let payloads = {};
+    if (payloadScript) {
+        try {
+            payloads = JSON.parse(payloadScript.textContent);
+        } catch (error) {
+            console.warn('解析历史记录数据失败:', error);
+        }
+    }
+
+    const storageKeys = {
+        theme: 'historyThemePreference',
+        compact: 'historyCompactMode',
+        autoOpen: 'historyAutoOpen'
+    };
+
+    const selected = new Set();
+
+    const getCheckboxes = () => grid ? Array.from(grid.querySelectorAll('[data-select-record]')) : [];
+
+    const updateSelectedBadge = () => {
+        if (selectedBadge) {
+            selectedBadge.textContent = selected.size;
+        }
+        if (exportButton) {
+            exportButton.disabled = selected.size === 0;
+        }
+        if (selectAll) {
+            const boxes = getCheckboxes();
+            const allChecked = boxes.length > 0 && boxes.every(cb => cb.checked);
+            selectAll.checked = allChecked;
+            selectAll.indeterminate = selected.size > 0 && selected.size < boxes.length;
+        }
+    };
+
+    const buildPayloadFromCard = (card) => {
+        const recordId = card?.dataset?.recordId;
+        if (!recordId) return null;
+        const stored = payloads?.[recordId];
+        if (stored) {
+            return stored;
+        }
+
+        const payload = {
+            id: recordId,
+            request_type: card.dataset.requestType || null,
+            status: card.dataset.status || null,
+            created_at: card.querySelector('.history-card-time')?.textContent?.trim() || null,
+            input_content: card.querySelector('[id^="input-content-"]')?.textContent?.trim() || '',
+            response_content: card.querySelector('[id^="output-content-"]')?.textContent?.trim() || '',
+        };
+        return payload;
+    };
+
+    const downloadRecords = (records) => {
+        if (!records || records.length === 0) {
+            return;
+        }
+        const fileName = `history-export-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+        window.RAssistant?.showToast?.(`已导出 ${records.length} 条记录`, 'success', 1800);
+    };
+
+    const handleCheckboxChange = (checkbox) => {
+        const card = checkbox.closest('.history-card');
+        if (!card) return;
+        const id = card.dataset.recordId;
+        if (!id) return;
+        if (checkbox.checked) {
+            selected.add(id);
+            card.classList.add('history-card-selected');
+        } else {
+            selected.delete(id);
+            card.classList.remove('history-card-selected');
+        }
+        updateSelectedBadge();
+    };
+
+    getCheckboxes().forEach(cb => {
+        cb.addEventListener('change', () => handleCheckboxChange(cb));
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const boxes = getCheckboxes();
+            boxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                cb.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+
+    if (exportButton) {
+        exportButton.addEventListener('click', () => {
+            const payload = Array.from(selected).map(id => payloads?.[id]).filter(Boolean);
+            if (payload.length === 0) {
+                window.RAssistant?.showToast?.('请选择需要导出的记录', 'warning', 1800);
+                return;
+            }
+            downloadRecords(payload);
+        });
+    }
+
+    grid?.querySelectorAll('[data-export-single]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.history-card');
+            const payload = buildPayloadFromCard(card);
+            if (payload) {
+                downloadRecords([payload]);
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-copy-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const selector = btn.getAttribute('data-copy-target');
+            const target = selector ? document.querySelector(selector) : null;
+            if (!target) {
+                return;
+            }
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                btn.innerHTML = '<i class="fas fa-check me-1"></i>已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy me-1"></i>复制';
+                }, 2000);
+                window.RAssistant?.showToast?.('内容已复制', 'success', 1500);
+            } catch (error) {
+                console.error('复制失败', error);
+                window.RAssistant?.showToast?.('复制失败，请手动复制', 'error', 1800);
+            }
+            selection.removeAllRanges();
+        });
+    });
+
+    const applyHistoryTheme = (theme, persist = true) => {
+        if (!root) return;
+        root.setAttribute('data-history-theme', theme);
+        themeOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.historyThemeValue === theme);
+        });
+        if (persist) {
+            localStorage.setItem(storageKeys.theme, theme);
+        }
+    };
+
+    const applyCompactMode = (enabled, persist = true) => {
+        if (!root) return;
+        root.classList.toggle('history-compact', enabled);
+        if (compactToggle) {
+            compactToggle.checked = enabled;
+        }
+        if (persist) {
+            localStorage.setItem(storageKeys.compact, enabled ? '1' : '0');
+        }
+    };
+
+    const applyAutoOpen = (enabled, persist = true) => {
+        if (autoOpenToggle) {
+            autoOpenToggle.checked = enabled;
+        }
+        if (persist) {
+            localStorage.setItem(storageKeys.autoOpen, enabled ? '1' : '0');
+        }
+        if (enabled && grid) {
+            const latest = grid.querySelector('[data-history-details]');
+            latest?.setAttribute('open', 'open');
+        }
+    };
+
+    themeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const theme = option.dataset.historyThemeValue || 'classic';
+            applyHistoryTheme(theme);
+            window.RAssistant?.showToast?.(`主题已切换为 ${option.textContent.trim()}`, 'info', 1500);
+        });
+    });
+
+    compactToggle?.addEventListener('change', () => {
+        applyCompactMode(compactToggle.checked);
+    });
+
+    autoOpenToggle?.addEventListener('change', () => {
+        applyAutoOpen(autoOpenToggle.checked);
+    });
+
+    const openThemePanel = () => {
+        if (!themePanel) return;
+        themePanel.hidden = false;
+        themePanel.classList.add('history-theme-panel-open');
+    };
+
+    const closeThemePanel = () => {
+        if (!themePanel) return;
+        themePanel.classList.remove('history-theme-panel-open');
+        setTimeout(() => {
+            themePanel.hidden = true;
+        }, 200);
+    };
+
+    themePanelTrigger?.addEventListener('click', openThemePanel);
+    themePanelClose?.addEventListener('click', closeThemePanel);
+
+    document.addEventListener('click', (event) => {
+        if (!themePanel || themePanel.hidden) return;
+        if (themePanel.contains(event.target) || event.target === themePanelTrigger) return;
+        if (event.target.closest('[data-theme-panel-trigger]')) return;
+        if (!themePanel.contains(event.target)) {
+            closeThemePanel();
+        }
+    });
+
+    // 恢复偏好
+    const savedTheme = localStorage.getItem(storageKeys.theme) || 'classic';
+    applyHistoryTheme(savedTheme, false);
+
+    const savedCompact = localStorage.getItem(storageKeys.compact) === '1';
+    applyCompactMode(savedCompact, false);
+
+    const savedAutoOpen = localStorage.getItem(storageKeys.autoOpen) === '1';
+    applyAutoOpen(savedAutoOpen, false);
+
+    // 可选：自动展开第一条
+    if (savedAutoOpen && grid) {
+        const firstOpen = grid.querySelector('[data-history-details]');
+        firstOpen?.setAttribute('open', 'open');
+    }
+
+    updateSelectedBadge();
 });
 </script>
 {% endblock %}

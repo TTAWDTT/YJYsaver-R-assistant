@@ -279,12 +279,21 @@
 
 /* Advanced Code Editor 容器样式 */
 .advanced-code-editor {
-    height: 400px;
-    border: 1px solid #333;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #1e1e1e;
+    min-height: 420px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.88));
+    box-shadow: 0 25px 45px rgba(8, 11, 19, 0.45);
     font-family: 'Consolas', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    backdrop-filter: blur(24px);
+}
+
+.advanced-code-editor .editor-toolbar {
+    border-bottom: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.advanced-code-editor .editor-statusbar {
+    border-top: 1px solid rgba(99, 102, 241, 0.25);
 }
 
 /* Monaco Editor 行号优化 */
@@ -315,7 +324,7 @@
 }
 
 .monaco-editor .monaco-editor-background {
-    background-color: #1e1e1e !important;
+    background-color: #0f172a !important;
 }
 
 /* Fallback Editor 样式优化 */

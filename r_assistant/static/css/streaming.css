@@ -1,0 +1,402 @@
+/* 流式处理相关样式 */
+
+/* 流式进度容器 */
+.streaming-progress {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.streaming-progress .progress-header h6 {
+    color: #3b82f6;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* 进度条样式优化 */
+.streaming-progress .progress {
+    background-color: rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    height: 8px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.streaming-progress .progress-bar {
+    border-radius: 8px;
+    transition: width 0.6s ease;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.streaming-progress .progress-bar.bg-success {
+    background: linear-gradient(90deg, #10b981, #059669) !important;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* 进度消息 */
+.streaming-progress .progress-message {
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.streaming-progress .progress-message .text-muted {
+    color: #94a3b8 !important;
+    font-size: 12px;
+}
+
+/* 流式内容容器 */
+.streaming-content {
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+/* 解释结果样式 */
+.explanation-result {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.explanation-result .explanation-content {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+}
+
+/* 分析结果样式 */
+.analysis-section {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.metric-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.metric-card .metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 4px;
+}
+
+.metric-card .text-muted {
+    color: #94a3b8 !important;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 作业求解结果样式 */
+.answer-result {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.solution-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+    transition: all 0.3s ease;
+}
+
+.solution-card:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
+}
+
+.solution-header h5 {
+    color: #3b82f6;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+/* 代码区域样式 */
+.code-section {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+}
+
+.code-section .copy-code-btn {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #3b82f6;
+    font-size: 12px;
+    padding: 4px 12px;
+    transition: all 0.3s ease;
+}
+
+.code-section .copy-code-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.code-section pre {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 8px 0 0 0;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.code-section pre code {
+    color: #e2e8f0 !important;
+    background: none !important;
+    padding: 0;
+    font-family: inherit;
+}
+
+/* 解释区域样式 */
+.explanation-section {
+    background: rgba(30, 41, 59, 0.6) !important;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+}
+
+.explanation-section h6 {
+    color: #06b6d4;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.explanation-content {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+/* 动作按钮样式 */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 16px;
+}
+
+.action-buttons .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 答案摘要样式 */
+.answer-summary {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+}
+
+.answer-summary h6 {
+    color: #fbbf24;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* 错误状态样式 */
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* 加载动画 */
+.streaming-progress .progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite, pulseGlow 2s ease-in-out infinite;
+}
+
+/* Markdown内容样式增强 */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+    color: #f1f5f9;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.markdown-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+    font-size: 1.3rem;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 6px;
+}
+
+.markdown-content h3 {
+    font-size: 1.2rem;
+    color: #94a3b8;
+}
+
+.markdown-content h4 {
+    font-size: 1.1rem;
+    color: #cbd5e0;
+}
+
+.markdown-content p {
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 12px;
+    padding-left: 20px;
+}
+
+.markdown-content li {
+    margin-bottom: 6px;
+    line-height: 1.6;
+}
+
+.markdown-content code {
+    background: rgba(59, 130, 246, 0.15);
+    color: #fbbf24;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+
+.markdown-content pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+    border-radius: 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.markdown-content strong {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.markdown-content em {
+    color: #cbd5e0;
+    font-style: italic;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .streaming-progress {
+        padding: 16px;
+        margin: 12px 0;
+        border-radius: 12px;
+    }
+    
+    .solution-card {
+        padding: 16px;
+        margin: 12px 0;
+        border-radius: 12px;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .metric-card {
+        padding: 12px;
+    }
+    
+    .metric-card .metric-value {
+        font-size: 18px;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+    
+    .code-section {
+        padding: 12px;
+    }
+    
+    .explanation-section {
+        padding: 12px;
+    }
+}

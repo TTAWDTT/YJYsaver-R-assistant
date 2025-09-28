@@ -1,242 +1,738 @@
 {% extends 'core/base.html' %}
-{% load markdown_filters %}
+{% load static markdown_filters %}
 
 {% block title %}智能对话 - R语言智能助手{% endblock %}
 
 {% block extra_css %}
 <style>
-/* Markdown 样式 */
-.markdown-content {
+.conversation-hero {
+    padding: 2.75rem 2.5rem;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(165, 180, 252, 0.12));
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 25px 55px rgba(15, 23, 42, 0.35);
+}
+
+.conversation-hero .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.18);
+    color: #e0f2fe;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.conversation-hero .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+}
+
+.conversation-hero .hero-meta .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 14px;
+    background: rgba(30, 64, 175, 0.18);
+    color: #bfdbfe;
+    font-size: 0.85rem;
+}
+
+.conversation-card {
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.88));
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 30px 60px rgba(8, 11, 19, 0.45);
+    height: 100%;
+}
+
+.conversation-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 6rem;
+    z-index: 2;
+}
+
+@media (max-width: 1199px) {
+    .conversation-sidebar {
+        position: static;
+        top: auto;
+    }
+}
+
+.sidebar-card {
+    border-radius: 24px;
+    background: linear-gradient(150deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.78));
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    box-shadow: 0 22px 44px rgba(8, 11, 19, 0.38);
+    padding: 1.75rem;
+}
+
+.sidebar-card .sidebar-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.sidebar-card .sidebar-header h5,
+.sidebar-card .sidebar-header h6 {
+    margin: 0;
+}
+
+.sidebar-card .sidebar-description {
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.85rem;
+}
+
+.session-glance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.9rem;
+}
+
+.session-glance .metric {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.session-glance .metric small {
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    color: rgba(148, 163, 184, 0.75);
+}
+
+.session-glance .metric strong {
+    font-size: 1.25rem;
+    color: #f8fafc;
+}
+
+.quick-replies {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.6rem;
+}
+
+.session-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.68);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.session-status-bar .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(94, 234, 212, 0.12);
+    color: #a7f3d0;
+    font-size: 0.78rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.session-status-bar .status-pill i {
+    font-size: 0.85rem;
+}
+
+.session-status-bar .status-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    color: #cbd5f5;
+    font-size: 0.82rem;
+}
+
+.chat-scroll-area {
+    height: clamp(360px, 56vh, 520px);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    scroll-behavior: smooth;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.55), rgba(99, 102, 241, 0.45));
+    border-radius: 999px;
+}
+
+.chat-message {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.chat-message.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.chat-message .avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
+}
+
+.chat-message.user .avatar {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.35), rgba(59, 130, 246, 0.3));
+    color: #e0f2fe;
+}
+
+.chat-message.assistant .avatar {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.35), rgba(129, 140, 248, 0.3));
+    color: #ede9fe;
+}
+
+.chat-message .message-meta {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.chat-message .message-content {
     color: #e2e8f0;
+    font-size: 0.95rem;
+}
+
+.chat-message .message-content p {
+    margin-bottom: 0.75rem;
+}
+
+.chat-message .message-content pre {
+    margin: 0.75rem 0;
+}
+
+.chat-message .message-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.chat-message:hover .message-actions {
+    opacity: 1;
+}
+
+.chat-message .message-actions button {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(30, 41, 59, 0.65);
+    color: #cbd5f5;
+    font-size: 0.75rem;
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s ease;
+}
+
+.chat-message .message-actions button:hover {
+    border-color: rgba(129, 140, 248, 0.45);
+    color: #e0e7ff;
+    transform: translateY(-1px);
+}
+
+.chat-message .message-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-message .message-meta time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(129, 140, 248, 0.8);
+    animation: typing-bounce 1.2s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+    0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    40% {
+        transform: translateY(-3px);
+        opacity: 1;
+    }
+}
+
+.empty-state {
+    border: 2px dashed rgba(148, 163, 184, 0.25);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.45);
+    color: #cbd5f5;
+}
+
+.input-wrapper {
+    padding: 1.25rem;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.85);
+}
+
+.input-wrapper textarea {
+    width: 100%;
+    min-height: 120px;
+    max-height: 240px;
+    resize: none;
+    border: none;
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 0.95rem;
     line-height: 1.6;
 }
 
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-    color: #f8fafc;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+.input-wrapper textarea:focus {
+    outline: none;
+    box-shadow: none;
 }
 
-.markdown-content h1 {
-    font-size: 1.3rem;
-    border-bottom: 2px solid #667eea;
-    padding-bottom: 0.2rem;
-}
-
-.markdown-content h2 {
-    font-size: 1.2rem;
-    border-bottom: 1px solid #4a5568;
-    padding-bottom: 0.1rem;
-}
-
-.markdown-content h3 {
-    font-size: 1.1rem;
-    color: #a0aec0;
-}
-
-.markdown-content p {
-    margin-bottom: 0.8rem;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-    margin-bottom: 0.8rem;
-    padding-left: 1.2rem;
-}
-
-.markdown-content li {
-    margin-bottom: 0.2rem;
-}
-
-.markdown-content code {
-    background-color: rgba(45, 55, 72, 0.6);
-    color: #fbb6ce;
-    padding: 0.1rem 0.3rem;
-    border-radius: 0.2rem;
-    font-size: 0.85rem;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-}
-
-.markdown-content pre {
-    background-color: rgba(26, 32, 44, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.4rem;
-    padding: 0.8rem;
-    overflow-x: auto;
-    margin: 0.8rem 0;
-}
-
-.markdown-content pre code {
-    background: none;
-    color: #e2e8f0;
-    padding: 0;
+.quick-reply-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(30, 41, 59, 0.65);
+    color: #c7d2fe;
     font-size: 0.8rem;
+    transition: all 0.25s ease;
+    justify-content: flex-start;
 }
 
-.markdown-content strong {
-    color: #f7fafc;
-    font-weight: 600;
+.quick-reply-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(129, 140, 248, 0.55);
+    color: #e0e7ff;
+    box-shadow: 0 10px 22px rgba(99, 102, 241, 0.25);
 }
 
-.markdown-content em {
-    color: #cbd5e0;
-    font-style: italic;
+.conversation-actions .btn-outline-light {
+    border-color: rgba(148, 163, 184, 0.25);
 }
 
-.chat-message.assistant .markdown-content {
-    font-size: 0.95rem;
+.sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.sidebar-actions .btn,
+.sidebar-actions .btn-group {
+    width: 100%;
+}
+
+.sidebar-actions .btn-group > a {
+    flex: 1 1 auto;
+}
+
+.prompt-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.prompt-pill {
+    border-radius: 12px;
+    padding: 0.4rem 0.75rem;
+    background: rgba(79, 70, 229, 0.2);
+    color: #c7d2fe;
+    font-size: 0.75rem;
+}
+
+.prompt-pill i {
+    margin-right: 0.4rem;
+}
+
+.composer-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+}
+
+.composer-footer .composer-meta {
+    display: inline-flex;
+    gap: 0.75rem;
+    font-size: 0.76rem;
+    color: rgba(148, 163, 184, 0.8);
+}
+
+.composer-footer .composer-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.composer-footer .composer-meta i {
+    font-size: 0.85rem;
+}
+
+.composer-footer .composer-actions {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.composer-footer .composer-actions .btn-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(30, 41, 59, 0.65);
+    color: #cbd5f5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.composer-footer .composer-actions .btn-icon:hover {
+    border-color: rgba(129, 140, 248, 0.6);
+    color: #e0e7ff;
+    transform: translateY(-1px);
+}
+
+.composer-footer .composer-actions .btn-icon.active {
+    border-color: rgba(59, 130, 246, 0.75);
+    color: #bfdbfe;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+}
+
+@media (max-width: 768px) {
+    .conversation-hero {
+        padding: 2.25rem 1.75rem;
+    }
+    .input-wrapper {
+        padding: 1rem;
+    }
+    .quick-replies {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="row">
+    <div class="row gy-5">
         <div class="col-12">
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold text-white mb-3">
-                    <i class="fas fa-comments text-success me-3"></i>
-                    <span class="text-gradient">智能对话</span>
-                </h1>
-                <p class="lead text-light">
-                    与R语言专家进行友好交流，获取学习建议和编程技巧
+            <div class="conversation-hero glass-effect text-center" data-reveal>
+                <span class="hero-tag">
+                    <i class="fas fa-sparkles"></i> AI 加速器
+                </span>
+                <h1 class="display-5 fw-bold text-white mt-3 mb-3">智能对话工作室</h1>
+                <p class="lead text-light mb-4">
+                    与R语言专家随时畅聊，从代码调试到学习规划，获得快速而可靠的建议。
                 </p>
+                <div class="hero-meta">
+                    <div class="item">
+                        <i class="fas fa-bolt"></i>
+                        平均响应 <strong>1.3s</strong>
+                    </div>
+                    <div class="item">
+                        <i class="fas fa-shield-alt"></i>
+                        上下文记忆 10 条
+                    </div>
+                    <div class="item">
+                        <i class="fas fa-infinity"></i>
+                        全天候陪伴
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="glass-effect rounded-4 p-4">
-                <!-- 对话历史 -->
-                <div class="chat-container mb-4" style="height: 400px; overflow-y: auto;">
-                    {% for message in conversation_history %}
-                    <div class="chat-message mb-3 {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
-                        <div class="d-flex align-items-start">
-                            <div class="avatar me-3">
-                                {% if message.role == 'user' %}
-                                <i class="fas fa-user-circle fa-2x text-primary"></i>
-                                {% else %}
-                                <i class="fas fa-robot fa-2x text-success"></i>
-                                {% endif %}
-                            </div>
-                            <div class="message-content flex-grow-1">
-                                <div class="message-header mb-1">
-                                    <strong class="text-white">
-                                        {% if message.role == 'user' %}您{% else %}AI助手{% endif %}
-                                    </strong>
-                                    <small class="text-muted ms-2">{{ message.timestamp|date:"H:i" }}</small>
-                                </div>
-                                <div class="message-text text-light">
-                                    {% if message.role == 'assistant' %}
-                                        {{ message.content|markdown_safe }}
+        <div class="col-12 col-xl-8 order-2 order-xl-1">
+            <div class="conversation-card glass-effect p-4 p-lg-5" data-reveal>
+                <div class="session-status-bar" id="sessionStatusBar" aria-live="polite">
+                    <div class="status-pill">
+                        <i class="fas fa-wave-square"></i>
+                        <span>持续对话模式</span>
+                    </div>
+                    <div class="status-metadata" role="status">
+                        <span><i class="fas fa-clock"></i><strong data-session-last="">刚刚</strong></span>
+                        <span><i class="fas fa-message"></i><strong data-session-count="">0</strong> 条消息</span>
+                        <span><i class="fas fa-bolt"></i><strong data-session-latency="">--</strong></span>
+                    </div>
+                </div>
+
+                <div id="chatMessages" class="chat-shell chat-scroll-area" aria-live="polite" aria-label="对话内容" role="log"></div>
+                <noscript>
+                    <div class="chat-shell chat-scroll-area">
+                        {% for message in conversation_history %}
+                        <div class="chat-message {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="avatar {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                                    {% if message.role == 'user' %}
+                                    <i class="fas fa-user-astronaut"></i>
                                     {% else %}
-                                        {{ message.content|linebreaks }}
+                                    <i class="fas fa-robot"></i>
                                     {% endif %}
+                                </div>
+                                <div class="message-body flex-grow-1">
+                                    <div class="message-meta d-flex align-items-center gap-2 mb-2">
+                                        <strong>{% if message.role == 'user' %}您{% else %}AI助手{% endif %}</strong>
+                                        <span>{{ message.timestamp|date:"H:i" }}</span>
+                                    </div>
+                                    <div class="message-content markdown-content">
+                                        {% if message.role == 'assistant' %}
+                                            {{ message.content|markdown_safe }}
+                                        {% else %}
+                                            {{ message.content|linebreaks }}
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        {% empty %}
+                        <div class="empty-state py-4 text-center">
+                            <i class="fas fa-comment-dots fa-2x mb-3"></i>
+                            <p class="mb-0">开始您的第一次对话吧！</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <div class="text-center text-muted py-5">
-                        <i class="fas fa-comments fa-3x mb-3 opacity-50"></i>
-                        <p>开始您的第一次对话吧！</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                </noscript>
 
-                <!-- 消息输入 -->
-                <form method="post" action="{% url 'core:talk' %}">
+                <form method="post" action="{% url 'core:talk' %}" class="chat-form mt-4" data-reveal id="chatForm">
                     {% csrf_token %}
-                    <div class="input-group">
-                        <textarea 
-                            class="form-control" 
-                            name="message" 
-                            rows="3" 
-                            placeholder="请输入您想要咨询的R语言相关问题..."
-                            required></textarea>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            发送
-                        </button>
+                    <label for="messageInput" class="form-label text-muted small mb-2">
+                        输入您的问题或上下文
+                    </label>
+                    <div class="input-wrapper">
+                        <textarea id="messageInput" name="message" placeholder="比如：帮我解释一下这段R语言数据清洗代码..." required data-autosize></textarea>
+                        <div class="composer-toolbar d-flex flex-wrap align-items-center justify-content-end gap-2 mt-3">
+                            <div class="composer-actions ms-auto">
+                                <button type="button" class="btn-icon" title="清空输入" data-composer-action="clear">
+                                    <i class="fas fa-broom"></i>
+                                </button>
+                                <button type="button" class="btn-icon" title="插入代码块" data-composer-action="code">
+                                    <i class="fas fa-code"></i>
+                                </button>
+                                <button type="button" class="btn-icon" title="暂存消息" data-composer-action="remember">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg px-4" id="sendMessageBtn">
+                                    <i class="fas fa-paper-plane me-2"></i>发送
+                                </button>
+                            </div>
+                        </div>
+                        <div class="composer-footer">
+                            <div class="composer-meta">
+                                <span><i class="fas fa-arrow-turn-down"></i>Shift + Enter 换行</span>
+                                <span><i class="fas fa-keyboard"></i>Ctrl + Enter 立即发送</span>
+                                <span><i class="fas fa-shield-heart"></i>上下文自动记忆 10 条</span>
+                            </div>
+                            <div class="composer-meta" data-dynamic-hint>
+                                <span><i class="fas fa-wand-magic-sparkles"></i>提示：描述您的需求，AI 会主动给出下一步建议</span>
+                            </div>
+                        </div>
                     </div>
                 </form>
 
                 {% if error_message %}
-                <div class="alert alert-danger mt-3">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    {{ error_message }}
+                <div class="alert alert-danger mt-3 mb-0" role="alert">
+                    <i class="fas fa-circle-exclamation me-2"></i>{{ error_message }}
                 </div>
                 {% endif %}
+            </div>
+        </div>
 
-                <!-- 快速回复建议 -->
-                <div class="mt-3">
-                    <small class="text-muted">快速提问：</small>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('如何在R中读取CSV文件？')">
-                            如何读取CSV文件？
+        <div class="col-12 col-xl-4 order-1 order-xl-2">
+            <aside class="conversation-sidebar">
+                <div class="sidebar-card glass-effect" data-reveal>
+                    <div class="sidebar-header">
+                        <div>
+                            <h5 class="text-white">快速提示</h5>
+                            <p class="sidebar-description mb-0">常见任务一键填入输入框</p>
+                        </div>
+                        <span class="badge rounded-pill bg-info bg-opacity-25 text-info fw-semibold">建议</span>
+                    </div>
+                    <div class="quick-replies" id="quickReplies">
+                        <button type="button" class="quick-reply-chip" data-quick-reply="如何在R中读取CSV文件？">
+                            <i class="fas fa-file-csv"></i> CSV读取
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('ggplot2包的基本用法是什么？')">
-                            ggplot2基本用法
+                        <button type="button" class="quick-reply-chip" data-quick-reply="ggplot2包的基本用法是什么？">
+                            <i class="fas fa-chart-bar"></i> ggplot2技巧
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('如何计算描述性统计？')">
-                            描述性统计
+                        <button type="button" class="quick-reply-chip" data-quick-reply="请帮我写一段描述性统计的代码">
+                            <i class="fas fa-table"></i> 描述性统计
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-light me-2 mb-2" onclick="fillMessage('R中的数据类型有哪些？')">
-                            数据类型
+                        <button type="button" class="quick-reply-chip" data-quick-reply="R语言中的数据类型有哪些？">
+                            <i class="fas fa-layer-group"></i> 数据类型
+                        </button>
+                        <button type="button" class="quick-reply-chip" data-quick-reply="请输出一段用于数据清洗的tidyverse流程">
+                            <i class="fas fa-wand-magic-sparkles"></i> tidyverse流程
+                        </button>
+                        <button type="button" class="quick-reply-chip" data-quick-reply="给我一份用于作图的ggplot主题模板">
+                            <i class="fas fa-palette"></i> ggplot主题
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- 清除历史 -->
-    <div class="row mt-4">
-        <div class="col-lg-8 mx-auto text-center">
-            <form method="post" action="{% url 'core:clear_history' %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('确定要清除对话历史吗？')">
-                    <i class="fas fa-trash me-2"></i>
-                    清除对话历史
-                </button>
-            </form>
-            
-            <div class="btn-group ms-3" role="group">
-                <a href="{% url 'core:explain' %}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-code me-2"></i>
-                    代码解释
-                </a>
-                <a href="{% url 'core:answer' %}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    作业求解
-                </a>
-                <a href="{% url 'core:history' %}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-history me-2"></i>
-                    查看历史
-                </a>
-            </div>
+                <div class="sidebar-card glass-effect" data-reveal>
+                    <div class="sidebar-header">
+                        <div>
+                            <h6 class="text-white">会话概览</h6>
+                            <p class="sidebar-description mb-0">实时查看当前会话动态</p>
+                        </div>
+                    </div>
+                    <div class="session-glance">
+                        <div class="metric">
+                            <small>消息总数</small>
+                            <strong data-session-count>0</strong>
+                        </div>
+                        <div class="metric">
+                            <small>最近互动</small>
+                            <strong data-session-last>刚刚</strong>
+                        </div>
+                        <div class="metric">
+                            <small>响应延迟</small>
+                            <strong data-session-latency>--</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-card glass-effect" data-reveal>
+                    <div class="sidebar-header">
+                        <div>
+                            <h6 class="text-white">常用操作</h6>
+                            <p class="sidebar-description mb-0">整理上下文或跳转至其他工具</p>
+                        </div>
+                    </div>
+                    <div class="sidebar-actions">
+                        <form method="post" action="{% url 'core:clear_history' %}" id="clearHistoryForm">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-trash me-2"></i>清除对话历史
+                            </button>
+                        </form>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'core:explain' %}" class="btn btn-outline-light">
+                                <i class="fas fa-code me-2"></i>代码解释
+                            </a>
+                            <a href="{% url 'core:answer' %}" class="btn btn-outline-light">
+                                <i class="fas fa-lightbulb me-2"></i>作业求解
+                            </a>
+                            <a href="{% url 'core:history' %}" class="btn btn-outline-light">
+                                <i class="fas fa-history me-2"></i>查看历史
+                            </a>
+                        </div>
+                        <div class="prompt-pills">
+                            <span class="prompt-pill"><i class="fas fa-arrow-turn-down"></i>Shift + Enter 换行</span>
+                            <span class="prompt-pill"><i class="fas fa-keyboard"></i>Ctrl + Enter 发送</span>
+                            <span class="prompt-pill"><i class="fas fa-wand-magic-sparkles"></i>描述目标可获取结构化建议</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 </div>
 
-<script>
-function fillMessage(text) {
-    document.querySelector('textarea[name="message"]').value = text;
-}
+{{ conversation_history_json|json_script:'conversation-history-data' }}
+{% endblock %}
 
-// 自动滚动到底部
-document.addEventListener('DOMContentLoaded', function() {
-    const chatContainer = document.querySelector('.chat-container');
-    if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" integrity="sha384-nMpFyv1IwrKyYVJZZzKzbwQ6vurIWBLL8GMDIS9ZhDJW60Trw7O3cu6UytzszzoK" crossorigin="anonymous"></script>
+<script src="{% static 'js/modules/chat-experience.js' %}?v=1.0"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('chatMessages');
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('messageInput');
+    const historyNode = document.getElementById('conversation-history-data');
+    const statusBar = document.getElementById('sessionStatusBar');
+    const clearHistoryForm = document.getElementById('clearHistoryForm');
+
+    let history = [];
+    if (historyNode) {
+        try {
+            const parsed = JSON.parse(historyNode.textContent || '[]');
+            if (Array.isArray(parsed)) {
+                history = parsed;
+            }
+        } catch (error) {
+            console.warn('无法解析对话数据:', error);
+        }
     }
+
+    const quickReplies = Array.from(document.querySelectorAll('#quickReplies .quick-reply-chip'));
+    const composerActions = Array.from(document.querySelectorAll('[data-composer-action]'));
+
+    window.chatExperience = new ChatExperience({
+        container,
+        form,
+        input,
+        history,
+        quickReplies,
+        composerActions,
+        statusBar,
+        clearHistoryForm,
+        endpoints: {
+            talk: '{% url "core:api_talk" %}',
+            clearHistory: '{% url "core:api_clear_history" %}'
+        }
+    });
+
+    window.chatExperience.init();
 });
 </script>
 {% endblock %}

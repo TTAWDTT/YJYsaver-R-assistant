@@ -1,0 +1,478 @@
+{% extends 'core/base.html' %}
+
+{% block title %}流式处理测试 - R语言智能助手{% endblock %}
+
+{% block extra_css %}
+<style>
+.test-container {
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 16px;
+    padding: 30px;
+    margin: 20px 0;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.test-section {
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.code-display {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e2e8f0;
+}
+
+.result-display {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-ready { background: #6b7280; }
+.status-processing { background: #fbbf24; animation: pulse 2s infinite; }
+.status-success { background: #10b981; }
+.status-error { background: #ef4444; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-white mb-3">
+                    <i class="fas fa-flask text-primary me-3"></i>
+                    流式处理测试
+                </h1>
+                <p class="lead text-light">
+                    测试代码解释和作业求解的流式响应功能
+                </p>
+            </div>
+
+            <!-- 代码解释测试 -->
+            <div class="test-container">
+                <h3 class="text-info mb-4">
+                    <i class="fas fa-code me-2"></i>
+                    代码解释流式测试
+                </h3>
+                
+                <div class="test-section">
+                    <h5 class="text-white mb-3">测试代码</h5>
+                    <div class="code-display">
+# R语言数据分析示例
+library(ggplot2)
+data(mtcars)
+
+# 创建散点图
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(aes(color = factor(cyl))) +
+  geom_smooth(method = "lm") +
+  labs(title = "车重与油耗关系",
+       x = "车重", y = "油耗")
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="status-indicator status-ready" id="explainStatus"></span>
+                            <span class="text-white">状态: </span>
+                            <span class="text-muted" id="explainStatusText">准备就绪</span>
+                        </div>
+                        <button class="btn btn-primary" id="testExplainBtn">
+                            <i class="fas fa-play me-2"></i>
+                            测试代码解释
+                        </button>
+                    </div>
+                    
+                    <div class="result-display" id="explainResult">
+                        <div class="text-muted text-center py-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            点击按钮开始测试
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作业求解测试 -->
+            <div class="test-container">
+                <h3 class="text-success mb-4">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    作业求解流式测试
+                </h3>
+                
+                <div class="test-section">
+                    <h5 class="text-white mb-3">测试问题</h5>
+                    <div class="code-display">
+使用R语言分析mtcars数据集：
+
+1. 加载数据并查看基本信息
+2. 计算各变量的描述性统计
+3. 创建车重(wt)与油耗(mpg)的散点图
+4. 建立线性回归模型并分析结果
+5. 添加详细的注释说明
+
+请提供完整的R代码和详细解释。
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="status-indicator status-ready" id="answerStatus"></span>
+                            <span class="text-white">状态: </span>
+                            <span class="text-muted" id="answerStatusText">准备就绪</span>
+                        </div>
+                        <button class="btn btn-success" id="testAnswerBtn">
+                            <i class="fas fa-play me-2"></i>
+                            测试作业求解
+                        </button>
+                    </div>
+                    
+                    <div class="result-display" id="answerResult">
+                        <div class="text-muted text-center py-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            点击按钮开始测试
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能对话测试 -->
+            <div class="test-container">
+                <h3 class="text-warning mb-4">
+                    <i class="fas fa-comments me-2"></i>
+                    智能对话流式测试
+                </h3>
+                
+                <div class="test-section">
+                    <h5 class="text-white mb-3">测试问题</h5>
+                    <div class="code-display">
+请解释R语言中的apply函数家族（apply, lapply, sapply, mapply）的区别和使用场景，并提供简单的示例。
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="status-indicator status-ready" id="talkStatus"></span>
+                            <span class="text-white">状态: </span>
+                            <span class="text-muted" id="talkStatusText">准备就绪</span>
+                        </div>
+                        <button class="btn btn-warning" id="testTalkBtn">
+                            <i class="fas fa-play me-2"></i>
+                            测试智能对话
+                        </button>
+                    </div>
+                    
+                    <div class="result-display" id="talkResult">
+                        <div class="text-muted text-center py-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            点击按钮开始测试
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试结果摘要 -->
+            <div class="test-container">
+                <h3 class="text-light mb-4">
+                    <i class="fas fa-chart-line me-2"></i>
+                    测试结果摘要
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="test-section text-center">
+                            <h6 class="text-info">代码解释</h6>
+                            <div class="metric-value" id="explainMetric">未测试</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="test-section text-center">
+                            <h6 class="text-success">作业求解</h6>
+                            <div class="metric-value" id="answerMetric">未测试</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="test-section text-center">
+                            <h6 class="text-warning">智能对话</h6>
+                            <div class="metric-value" id="talkMetric">未测试</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const testCodes = {
+        explain: `# R语言数据分析示例
+library(ggplot2)
+data(mtcars)
+
+# 创建散点图
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(aes(color = factor(cyl))) +
+  geom_smooth(method = "lm") +
+  labs(title = "车重与油耗关系", x = "车重", y = "油耗")`,
+        
+        answer: `使用R语言分析mtcars数据集：
+
+1. 加载数据并查看基本信息
+2. 计算各变量的描述性统计
+3. 创建车重(wt)与油耗(mpg)的散点图
+4. 建立线性回归模型并分析结果
+5. 添加详细的注释说明
+
+请提供完整的R代码和详细解释。`,
+        
+        talk: `请解释R语言中的apply函数家族（apply, lapply, sapply, mapply）的区别和使用场景，并提供简单的示例。`
+    };
+
+    // 测试代码解释
+    document.getElementById('testExplainBtn').addEventListener('click', async function() {
+        await runStreamingTest('explain', testCodes.explain, '/api/streaming/explain/');
+    });
+
+    // 测试作业求解
+    document.getElementById('testAnswerBtn').addEventListener('click', async function() {
+        await runStreamingTest('answer', testCodes.answer, '/api/streaming/answer/', { problem: testCodes.answer });
+    });
+
+    // 测试智能对话
+    document.getElementById('testTalkBtn').addEventListener('click', async function() {
+        await runStreamingTest('talk', testCodes.talk, '/api/streaming/talk/', { message: testCodes.talk });
+    });
+
+    async function runStreamingTest(type, testData, endpoint, customData = null) {
+        const statusIndicator = document.getElementById(`${type}Status`);
+        const statusText = document.getElementById(`${type}StatusText`);
+        const resultContainer = document.getElementById(`${type}Result`);
+        const metricElement = document.getElementById(`${type}Metric`);
+        const button = document.getElementById(`test${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
+
+        // 重置状态
+        statusIndicator.className = 'status-indicator status-processing';
+        statusText.textContent = '连接中...';
+        button.disabled = true;
+        resultContainer.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>正在建立连接...</div>';
+
+        const startTime = Date.now();
+        let success = false;
+        let errorMessage = '';
+
+        try {
+            const requestData = customData || (type === 'explain' ? { code: testData } : { message: testData });
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            statusText.textContent = '正在接收数据...';
+            resultContainer.innerHTML = '<div class="text-warning"><i class="fas fa-download me-2"></i>正在接收流式数据...</div>';
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let progressStep = 0;
+            let totalSteps = 0;
+            let currentResult = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            await handleStreamData(data, type, statusText, resultContainer);
+                            
+                            if (data.type === 'progress') {
+                                progressStep = data.data.step;
+                                totalSteps = data.data.total;
+                            } else if (data.type === 'result') {
+                                currentResult = data.data;
+                                success = true;
+                            } else if (data.type === 'complete') {
+                                statusIndicator.className = 'status-indicator status-success';
+                                statusText.textContent = '测试完成';
+                            }
+                        } catch (e) {
+                            console.error('解析SSE数据失败:', e);
+                        }
+                    }
+                }
+            }
+
+            if (!success) {
+                throw new Error('未收到有效结果');
+            }
+
+        } catch (error) {
+            console.error(`${type}测试失败:`, error);
+            errorMessage = error.message;
+            statusIndicator.className = 'status-indicator status-error';
+            statusText.textContent = '测试失败';
+            resultContainer.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>测试失败: ${errorMessage}</div>`;
+        } finally {
+            button.disabled = false;
+            
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
+            if (success) {
+                metricElement.innerHTML = `<span class="text-success">${duration}秒</span>`;
+                metricElement.className = 'text-success';
+            } else {
+                metricElement.innerHTML = `<span class="text-danger">失败</span>`;
+                metricElement.className = 'text-danger';
+            }
+        }
+    }
+
+    async function handleStreamData(data, type, statusText, resultContainer) {
+        const { type: dataType, data: payload } = data;
+
+        switch (dataType) {
+            case 'start':
+                statusText.textContent = '开始处理...';
+                resultContainer.innerHTML = `<div class="text-info"><i class="fas fa-play me-2"></i>${payload.message}</div>`;
+                break;
+                
+            case 'progress':
+                statusText.textContent = `${payload.message} (${payload.step}/${payload.total})`;
+                const progressPercent = (payload.step / payload.total * 100).toFixed(0);
+                resultContainer.innerHTML = `
+                    <div class="text-warning mb-2">
+                        <i class="fas fa-cog fa-spin me-2"></i>${payload.message}
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: ${progressPercent}%"></div>
+                    </div>
+                `;
+                break;
+                
+            case 'data':
+                // 处理中间数据
+                break;
+                
+            case 'result':
+                statusText.textContent = '处理完成';
+                displayResult(payload, type, resultContainer);
+                break;
+                
+            case 'error':
+                statusText.textContent = '处理失败';
+                resultContainer.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${payload.message}</div>`;
+                break;
+                
+            case 'complete':
+                statusText.textContent = '测试完成';
+                break;
+        }
+    }
+
+    function displayResult(result, type, container) {
+        let html = '';
+        
+        if (type === 'explain') {
+            html = `
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle me-2"></i>代码解释完成
+                </div>
+                <div class="text-light">
+                    <strong>处理时间:</strong> ${result.processing_time?.toFixed(2) || 0}秒<br>
+                    <strong>质量分数:</strong> ${result.quality_score || '未评估'}<br>
+                    <strong>Token数:</strong> ${result.total_tokens || 0}
+                </div>
+                <div class="mt-3">
+                    <h6 class="text-info">解释内容预览:</h6>
+                    <div class="text-muted" style="max-height: 100px; overflow-y: auto;">
+                        ${result.explanation?.substring(0, 200) || '无解释内容'}...
+                    </div>
+                </div>
+            `;
+        } else if (type === 'answer') {
+            html = `
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle me-2"></i>作业求解完成
+                </div>
+                <div class="text-light">
+                    <strong>处理时间:</strong> ${result.processing_time?.toFixed(2) || 0}秒<br>
+                    <strong>解决方案数:</strong> ${result.solutions?.length || 0}<br>
+                    <strong>Token数:</strong> ${result.total_tokens || 0}
+                </div>
+                ${result.solutions && result.solutions.length > 0 ? `
+                    <div class="mt-3">
+                        <h6 class="text-info">解决方案预览:</h6>
+                        <div class="text-muted" style="max-height: 100px; overflow-y: auto;">
+                            <strong>${result.solutions[0].title}</strong><br>
+                            ${result.solutions[0].explanation?.substring(0, 150) || '无解释内容'}...
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        } else if (type === 'talk') {
+            html = `
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle me-2"></i>智能对话完成
+                </div>
+                <div class="text-light">
+                    <strong>处理时间:</strong> ${result.processing_time?.toFixed(2) || 0}秒<br>
+                    <strong>Token数:</strong> ${result.total_tokens || 0}
+                </div>
+                <div class="mt-3">
+                    <h6 class="text-info">回复内容预览:</h6>
+                    <div class="text-muted" style="max-height: 100px; overflow-y: auto;">
+                        ${result.response?.substring(0, 200) || '无回复内容'}...
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+});
+</script>
+{% endblock %}

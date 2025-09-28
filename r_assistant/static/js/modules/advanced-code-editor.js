@@ -34,10 +34,516 @@ class AdvancedCodeEditor {
         this.model = null;
         this.selectedLines = new Set();
         this.symbolMap = this.initializeSymbolMap();
+        this.toolbar = null;
+        this.toolbarButtons = [];
+        this.toolbarElements = {};
+        this.statusBar = null;
+        this.statusElements = {};
+        this.editorHost = null;
+        this.skeletonElement = null;
+        this.themeOptions = this.initializeThemeOptions();
+        const desiredThemeKey = options.themeKey || (this.options.theme === 'vs-light' ? 'minimal' : null);
+        this.currentThemeIndex = this.themeOptions.findIndex(theme => theme.key === desiredThemeKey);
+        if (this.currentThemeIndex < 0) {
+            this.currentThemeIndex = 0;
+        }
+        this.currentTheme = this.themeOptions[this.currentThemeIndex]?.monaco || 'vs-dark';
+        this.wordWrapEnabled = !!this.options.wordWrap;
+        this.isReady = false;
         
         this.init();
     }
+
+    initializeThemeOptions() {
+        return [
+            {
+                key: 'classic',
+                label: '经典夜色',
+                monaco: 'vs-dark',
+                uiClass: 'adv-theme-dark',
+                icon: 'fas fa-moon',
+                description: '保持现有的暗色体验'
+            },
+            {
+                key: 'minimal',
+                label: '简约风',
+                monaco: 'rassist-minimal',
+                uiClass: 'adv-theme-minimal',
+                icon: 'fas fa-circle-notch',
+                description: '干净克制的亮色主题',
+                definition: {
+                    base: 'vs',
+                    inherit: true,
+                    rules: [
+                        { token: 'comment', foreground: '7E8A97', fontStyle: 'italic' },
+                        { token: 'keyword', foreground: '2563EB', fontStyle: 'bold' },
+                        { token: 'number', foreground: 'EA580C' },
+                        { token: 'string', foreground: '047857' },
+                        { token: 'operator', foreground: '475569' },
+                        { token: 'function', foreground: '7C3AED' },
+                        { token: 'type', foreground: '0EA5E9' }
+                    ],
+                    colors: {
+                        'editor.background': '#f7f8fa',
+                        'editor.foreground': '#1f2937',
+                        'editorLineNumber.foreground': '#9ca3af',
+                        'editorLineNumber.activeForeground': '#2563eb',
+                        'editorCursor.foreground': '#2563eb',
+                        'editor.selectionBackground': '#dbeafe',
+                        'editor.selectionHighlightBackground': '#bfdbfe88',
+                        'editor.inactiveSelectionBackground': '#e0f2fe',
+                        'editorSuggestWidget.background': '#ffffff',
+                        'editorSuggestWidget.border': '#e2e8f0',
+                        'editorSuggestWidget.foreground': '#1f2933',
+                        'editorSuggestWidget.selectedBackground': '#dbeafe',
+                        'editorWidget.background': '#ffffff',
+                        'editorIndentGuide.activeBackground': '#cbd5f5',
+                        'editorIndentGuide.background': '#e5e7eb',
+                        'scrollbarSlider.background': '#cbd5f580',
+                        'scrollbarSlider.hoverBackground': '#93c5fd',
+                        'scrollbarSlider.activeBackground': '#60a5fa',
+                        'minimap.background': '#f7f8fa'
+                    }
+                }
+            },
+            {
+                key: 'blossom',
+                label: '粉色星云',
+                monaco: 'rassist-blossom',
+                uiClass: 'adv-theme-blossom',
+                icon: 'fas fa-heart',
+                description: '粉色渐变的灵动主题',
+                definition: {
+                    base: 'vs',
+                    inherit: true,
+                    rules: [
+                        { token: 'comment', foreground: 'C97294', fontStyle: 'italic' },
+                        { token: 'keyword', foreground: 'BE185D', fontStyle: 'bold' },
+                        { token: 'number', foreground: '9D174D' },
+                        { token: 'string', foreground: '047857' },
+                        { token: 'operator', foreground: 'DB2777' },
+                        { token: 'function', foreground: '0F766E' },
+                        { token: 'type', foreground: 'EC4899' }
+                    ],
+                    colors: {
+                        'editor.background': '#fff5fa',
+                        'editor.foreground': '#4a154b',
+                        'editorLineNumber.foreground': '#d977a7',
+                        'editorLineNumber.activeForeground': '#db2777',
+                        'editorCursor.foreground': '#db2777',
+                        'editor.selectionBackground': '#fbcfe8',
+                        'editor.selectionHighlightBackground': '#fde6f3',
+                        'editor.inactiveSelectionBackground': '#fce7f3',
+                        'editorSuggestWidget.background': '#fff1f7',
+                        'editorSuggestWidget.border': '#f9a8d4',
+                        'editorSuggestWidget.foreground': '#5b224d',
+                        'editorSuggestWidget.selectedBackground': '#fbcfe8',
+                        'editorWidget.background': '#fff1f7',
+                        'editorIndentGuide.activeBackground': '#f472b6',
+                        'editorIndentGuide.background': '#fbcfe8',
+                        'scrollbarSlider.background': '#f9a8d485',
+                        'scrollbarSlider.hoverBackground': '#f472b6',
+                        'scrollbarSlider.activeBackground': '#ec4899',
+                        'minimap.background': '#fff5fa'
+                    }
+                }
+            },
+            {
+                key: 'mint',
+                label: '薄荷海岸',
+                monaco: 'rassist-mint',
+                uiClass: 'adv-theme-mint',
+                icon: 'fas fa-leaf',
+                description: '清爽的青绿色调主题',
+                definition: {
+                    base: 'vs-dark',
+                    inherit: true,
+                    rules: [
+                        { token: 'comment', foreground: '5EEAD4', fontStyle: 'italic' },
+                        { token: 'keyword', foreground: '2DD4BF', fontStyle: 'bold' },
+                        { token: 'number', foreground: '38BDF8' },
+                        { token: 'string', foreground: 'D1FAE5' },
+                        { token: 'operator', foreground: '22D3EE' },
+                        { token: 'function', foreground: '99F6E4' },
+                        { token: 'type', foreground: '67E8F9' }
+                    ],
+                    colors: {
+                        'editor.background': '#0f172a',
+                        'editor.foreground': '#ccfbf1',
+                        'editorLineNumber.foreground': '#14b8a6',
+                        'editorLineNumber.activeForeground': '#2dd4bf',
+                        'editorCursor.foreground': '#5eead4',
+                        'editor.selectionBackground': '#0f766e88',
+                        'editor.selectionHighlightBackground': '#10b98166',
+                        'editor.inactiveSelectionBackground': '#134e4a88',
+                        'editorSuggestWidget.background': '#042f2e',
+                        'editorSuggestWidget.border': '#0f766e',
+                        'editorSuggestWidget.foreground': '#a7f3d0',
+                        'editorSuggestWidget.selectedBackground': '#0d9488',
+                        'editorWidget.background': '#042f2e',
+                        'editorIndentGuide.activeBackground': '#22d3ee',
+                        'editorIndentGuide.background': '#1e293b',
+                        'scrollbarSlider.background': '#0f766e80',
+                        'scrollbarSlider.hoverBackground': '#14b8a6',
+                        'scrollbarSlider.activeBackground': '#2dd4bf',
+                        'minimap.background': '#042f2e'
+                    }
+                }
+            },
+            {
+                key: 'sunset',
+                label: '暮光余晖',
+                monaco: 'rassist-sunset',
+                uiClass: 'adv-theme-sunset',
+                icon: 'fas fa-sun',
+                description: '暖色渐变的傍晚主题',
+                definition: {
+                    base: 'vs-dark',
+                    inherit: true,
+                    rules: [
+                        { token: 'comment', foreground: 'FBBF24', fontStyle: 'italic' },
+                        { token: 'keyword', foreground: 'FB7185', fontStyle: 'bold' },
+                        { token: 'number', foreground: 'F97316' },
+                        { token: 'string', foreground: 'FDE68A' },
+                        { token: 'operator', foreground: 'F472B6' },
+                        { token: 'function', foreground: 'FACC15' },
+                        { token: 'type', foreground: 'FDBA74' }
+                    ],
+                    colors: {
+                        'editor.background': '#1b0f1f',
+                        'editor.foreground': '#fef3c7',
+                        'editorLineNumber.foreground': '#fb923c',
+                        'editorLineNumber.activeForeground': '#f97316',
+                        'editorCursor.foreground': '#fb7185',
+                        'editor.selectionBackground': '#be123c66',
+                        'editor.selectionHighlightBackground': '#f9731666',
+                        'editor.inactiveSelectionBackground': '#7f1d1d88',
+                        'editorSuggestWidget.background': '#2d0f1a',
+                        'editorSuggestWidget.border': '#fb7185',
+                        'editorSuggestWidget.foreground': '#fed7aa',
+                        'editorSuggestWidget.selectedBackground': '#be123c',
+                        'editorWidget.background': '#2d0f1a',
+                        'editorIndentGuide.activeBackground': '#f97316',
+                        'editorIndentGuide.background': '#7c2d12',
+                        'scrollbarSlider.background': '#be123c80',
+                        'scrollbarSlider.hoverBackground': '#fb7185',
+                        'scrollbarSlider.activeBackground': '#f97316',
+                        'minimap.background': '#2d0f1a'
+                    }
+                }
+            }
+        ];
+    }
+
+    getCurrentThemeConfig() {
+        return this.themeOptions?.[this.currentThemeIndex] || this.themeOptions?.[0];
+    }
     
+    renderToolbar() {
+        this.toolbarButtons = [];
+        this.toolbarElements = {};
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'editor-toolbar glass-effect';
+
+        const actions = document.createElement('div');
+        actions.className = 'toolbar-actions';
+
+        const formatBtn = this.createToolbarButton('format', 'fas fa-wand-magic-sparkles', '美化代码');
+        const wrapBtn = this.createToolbarButton('wrap', 'fas fa-text-width', '自动换行');
+    const themeBtn = this.createToolbarButton('theme', 'fas fa-moon', '经典夜色');
+        const copyBtn = this.createToolbarButton('copy', 'fas fa-copy', '复制代码');
+        const clearBtn = this.createToolbarButton('clear', 'fas fa-eraser', '清空');
+
+        [formatBtn, wrapBtn, themeBtn, copyBtn, clearBtn].forEach(button => {
+            button.disabled = true;
+            actions.appendChild(button);
+            this.toolbarButtons.push(button);
+        });
+
+        const right = document.createElement('div');
+        right.className = 'toolbar-right';
+
+        const runtimeChip = document.createElement('span');
+        runtimeChip.className = 'editor-toolbar-chip';
+        runtimeChip.innerHTML = '<i class="fas fa-bolt"></i><span>智能增强</span>';
+
+        const lengthChip = document.createElement('span');
+        lengthChip.className = 'editor-toolbar-chip';
+        lengthChip.setAttribute('data-role', 'length-indicator');
+        lengthChip.innerHTML = '<i class="fas fa-layer-group"></i><span data-length-text>0 行</span>';
+
+        right.appendChild(runtimeChip);
+        right.appendChild(lengthChip);
+
+        toolbar.appendChild(actions);
+        toolbar.appendChild(right);
+
+        this.toolbarElements.wrapButton = wrapBtn;
+        this.toolbarElements.themeButton = themeBtn;
+        this.toolbarElements.lengthIndicator = lengthChip;
+        this.toolbarElements.lengthIndicatorText = lengthChip.querySelector('[data-length-text]') || lengthChip;
+
+        return toolbar;
+    }
+
+    createToolbarButton(action, iconClass, label) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'editor-toolbar-chip';
+        button.dataset.action = action;
+        button.innerHTML = `<i class="${iconClass}" data-icon></i><span data-label>${label}</span>`;
+        return button;
+    }
+
+    renderStatusBar() {
+        const status = document.createElement('div');
+        status.className = 'editor-statusbar';
+        status.innerHTML = `
+            <span data-status="cursor"><i class="fas fa-i-cursor"></i><span class="status-text">Ln 1, Col 1</span></span>
+            <span data-status="selection"><i class="fas fa-highlighter"></i><span class="status-text">未选中</span></span>
+            <span data-status="length"><i class="fas fa-layer-group"></i><span class="status-text">0 行 · 0 字符</span></span>
+            <span data-status="wrap"><i class="fas fa-text-width"></i><span class="status-text">自动换行：关</span></span>
+        `;
+
+        this.statusElements = {
+            cursor: status.querySelector('[data-status="cursor"] .status-text'),
+            selection: status.querySelector('[data-status="selection"] .status-text'),
+            length: status.querySelector('[data-status="length"] .status-text'),
+            wrap: status.querySelector('[data-status="wrap"] .status-text')
+        };
+
+        return status;
+    }
+
+    renderSkeleton() {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'editor-skeleton';
+        skeleton.innerHTML = `
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+        `;
+        return skeleton;
+    }
+
+    initializeToolbarActions() {
+        if (!this.toolbarButtons || this.toolbarButtons.length === 0) return;
+
+        this.toolbarButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                const action = button.dataset.action;
+                this.handleToolbarAction(action, button);
+            });
+        });
+    }
+
+    toggleToolbarButtons(enabled) {
+        if (!this.toolbarButtons) return;
+        this.toolbarButtons.forEach(button => {
+            button.disabled = !enabled;
+            button.setAttribute('aria-disabled', (!enabled).toString());
+        });
+    }
+
+    handleToolbarAction(action, button) {
+        switch (action) {
+            case 'format':
+                this.formatCode();
+                break;
+            case 'wrap':
+                this.wordWrapEnabled = !this.wordWrapEnabled;
+                if (this.editor) {
+                    this.editor.updateOptions({ wordWrap: this.wordWrapEnabled ? 'on' : 'off' });
+                }
+                this.updateToolbarVisuals();
+                this.updateStatusBar();
+                break;
+            case 'theme':
+                this.cycleTheme();
+                break;
+            case 'copy':
+                this.copyAllCode(button);
+                break;
+            case 'clear':
+                this.clearEditor();
+                break;
+        }
+    }
+
+    cycleTheme() {
+        if (!Array.isArray(this.themeOptions) || this.themeOptions.length === 0) {
+            return;
+        }
+
+        this.currentThemeIndex = (this.currentThemeIndex + 1) % this.themeOptions.length;
+        const theme = this.getCurrentThemeConfig();
+        if (theme?.monaco) {
+            this.currentTheme = theme.monaco;
+        }
+
+        if (typeof monaco !== 'undefined' && monaco?.editor && this.editor) {
+            monaco.editor.setTheme(this.currentTheme);
+        }
+
+        this.applyThemeStyles();
+        this.updateToolbarVisuals();
+
+        if (window.RAssistant?.showToast && theme?.label) {
+            window.RAssistant.showToast(`已切换到${theme.label}主题`, 'info', 1800);
+        }
+    }
+
+    registerMonacoThemes() {
+        if (typeof monaco === 'undefined' || !monaco?.editor?.defineTheme) {
+            return;
+        }
+
+        this.themeOptions?.forEach(theme => {
+            if (!theme?.definition || !theme?.monaco) return;
+            try {
+                monaco.editor.defineTheme(theme.monaco, theme.definition);
+            } catch (error) {
+                console.warn(`注册主题 ${theme.monaco} 失败:`, error);
+            }
+        });
+    }
+
+    async copyAllCode(button) {
+        const code = this.getValue();
+        if (!code) {
+            window.RAssistant?.showToast?.('当前没有可复制的代码', 'warning', 1800);
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(code);
+            button?.classList.add('active');
+            setTimeout(() => button?.classList.remove('active'), 900);
+            window.RAssistant?.showToast?.('代码已复制到剪贴板', 'success', 1800);
+        } catch (error) {
+            console.warn('复制代码失败:', error);
+            window.RAssistant?.showToast?.('复制失败，请手动复制', 'error');
+        }
+    }
+
+    clearEditor() {
+        if (this.editor) {
+            this.editor.setValue('');
+        } else if (this.textarea) {
+            this.textarea.value = '';
+            this.updateLineNumbers?.();
+        }
+        this.updateStatusBar();
+        window.RAssistant?.showToast?.('编辑器已清空', 'info', 1800);
+    }
+
+    updateToolbarVisuals() {
+        if (!this.toolbarElements) return;
+
+        if (this.toolbarElements.wrapButton) {
+            const wrapLabel = this.toolbarElements.wrapButton.querySelector('[data-label]');
+            const wrapIcon = this.toolbarElements.wrapButton.querySelector('[data-icon]');
+            if (wrapLabel) {
+                wrapLabel.textContent = this.wordWrapEnabled ? '关闭换行' : '自动换行';
+            }
+            if (wrapIcon) {
+                wrapIcon.className = this.wordWrapEnabled ? 'fas fa-align-left' : 'fas fa-text-width';
+            }
+            this.toolbarElements.wrapButton.classList.toggle('active', this.wordWrapEnabled);
+        }
+
+        if (this.toolbarElements.themeButton) {
+            const themeLabel = this.toolbarElements.themeButton.querySelector('[data-label]');
+            const themeIcon = this.toolbarElements.themeButton.querySelector('[data-icon]');
+            const themeInfo = this.getCurrentThemeConfig();
+            const nextTheme = this.themeOptions[(this.currentThemeIndex + 1) % this.themeOptions.length];
+            if (themeLabel && themeInfo?.label) {
+                themeLabel.textContent = `主题：${themeInfo.label}`;
+            }
+            if (themeIcon && themeInfo?.icon) {
+                themeIcon.className = themeInfo.icon;
+            }
+            this.toolbarElements.themeButton.dataset.theme = themeInfo?.key || 'classic';
+            this.toolbarElements.themeButton.setAttribute('aria-label', nextTheme?.label ? `切换至${nextTheme.label}主题` : '切换主题');
+            this.toolbarElements.themeButton.title = nextTheme?.label ? `点击切换至${nextTheme.label}主题` : '点击切换主题';
+            this.toolbarElements.themeButton.classList.toggle('active', themeInfo?.key && themeInfo.key !== 'classic');
+        }
+
+        if (this.toolbarElements.lengthIndicatorText && this.model) {
+            this.toolbarElements.lengthIndicatorText.textContent = `${this.model.getLineCount()} 行`;
+        }
+    }
+
+    applyThemeStyles() {
+        if (!this.container) return;
+
+        const themeClasses = this.themeOptions
+            ?.map(theme => theme.uiClass)
+            .filter(Boolean) || [];
+
+        if (themeClasses.length) {
+            this.container.classList.remove(...themeClasses);
+        }
+
+        const themeInfo = this.getCurrentThemeConfig();
+        if (themeInfo?.uiClass) {
+            this.container.classList.add(themeInfo.uiClass);
+        }
+
+        if (this.toolbar) {
+            this.toolbar.dataset.theme = themeInfo?.key || '';
+        }
+
+        if (this.statusBar) {
+            this.statusBar.dataset.theme = themeInfo?.key || '';
+        }
+
+        if (this.editorHost) {
+            this.editorHost.dataset.theme = themeInfo?.key || '';
+        }
+    }
+
+    updateStatusBar() {
+        if (!this.statusElements || !Object.keys(this.statusElements).length) {
+            return;
+        }
+
+        if (this.editor && this.statusElements.cursor) {
+            const position = this.editor.getPosition();
+            if (position) {
+                this.statusElements.cursor.textContent = `Ln ${position.lineNumber}, Col ${position.column}`;
+            }
+        }
+
+        if (this.editor && this.statusElements.selection) {
+            const selection = this.editor.getSelection();
+            if (selection && !selection.isEmpty()) {
+                const selectedText = this.model.getValueInRange(selection);
+                const length = selectedText.length;
+                this.statusElements.selection.textContent = `选中 ${length} 字符`;
+            } else {
+                this.statusElements.selection.textContent = '未选中';
+            }
+        }
+
+        if (this.statusElements.length && this.model) {
+            const lines = this.model.getLineCount();
+            const characters = this.model.getValueLength();
+            this.statusElements.length.textContent = `${lines} 行 · ${characters} 字符`;
+        }
+
+        if (this.statusElements.wrap) {
+            this.statusElements.wrap.textContent = `自动换行：${this.wordWrapEnabled ? '开' : '关'}`;
+        }
+
+        if (this.toolbarElements?.lengthIndicatorText && this.model) {
+            this.toolbarElements.lengthIndicatorText.textContent = `${this.model.getLineCount()} 行`;
+        }
+    }
+
     initializeSymbolMap() {
         // R语言特殊符号映射表，解决符号显示问题
         return {
@@ -155,17 +661,40 @@ class AdvancedCodeEditor {
     
     setupContainer() {
         this.container.innerHTML = '';
-        this.container.className = 'advanced-code-editor';
-        this.container.style.cssText = `
-            position: relative;
-            width: 100%;
-            height: 400px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #1e1e1e;
-            font-family: ${this.options.fontFamily};
-        `;
+        this.container.removeAttribute('style');
+        this.container.classList.add('advanced-code-editor');
+        const themeClasses = this.themeOptions?.map(theme => theme.uiClass).filter(Boolean) || [];
+        if (themeClasses.length) {
+            this.container.classList.remove(...themeClasses);
+        }
+        const themeInfo = this.getCurrentThemeConfig();
+        if (themeInfo?.uiClass) {
+            this.container.classList.add(themeInfo.uiClass);
+        }
+
+        this.toolbar = this.renderToolbar();
+        if (this.toolbar) {
+            this.container.appendChild(this.toolbar);
+        }
+
+        this.editorHost = document.createElement('div');
+        this.editorHost.className = 'editor-host';
+        this.container.appendChild(this.editorHost);
+
+        this.statusBar = this.renderStatusBar();
+        if (this.statusBar) {
+            this.container.appendChild(this.statusBar);
+        }
+
+        this.skeletonElement = this.renderSkeleton();
+        if (this.skeletonElement) {
+            this.editorHost.appendChild(this.skeletonElement);
+        }
+
+        this.initializeToolbarActions();
+        this.toggleToolbarButtons(false);
+        this.updateToolbarVisuals();
+        this.applyThemeStyles();
     }
     
     createEditor() {
@@ -180,12 +709,19 @@ class AdvancedCodeEditor {
                 // 设置自动补全
                 monaco.languages.registerCompletionItemProvider('r', this.getRCompletionProvider());
             }
+
+            this.registerMonacoThemes();
             
+            if (this.skeletonElement) {
+                this.skeletonElement.remove();
+                this.skeletonElement = null;
+            }
+
             // 创建编辑器
-            this.editor = monaco.editor.create(this.container, {
+            this.editor = monaco.editor.create(this.editorHost, {
                 value: '',
                 language: 'r',
-                theme: this.options.theme,
+                theme: this.currentTheme,
                 fontSize: this.options.fontSize,
                 fontFamily: this.options.fontFamily,
                 
@@ -204,7 +740,7 @@ class AdvancedCodeEditor {
                 cursorSmoothCaretAnimation: true, // 平滑光标动画
                 
                 // 布局和滚动
-                wordWrap: this.options.wordWrap ? 'on' : 'off',
+                wordWrap: this.wordWrapEnabled ? 'on' : 'off',
                 minimap: { enabled: this.options.minimap },
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
@@ -262,6 +798,12 @@ class AdvancedCodeEditor {
             });
             
             this.model = this.editor.getModel();
+            this.isReady = true;
+
+            this.toggleToolbarButtons(true);
+            this.updateToolbarVisuals();
+            this.updateStatusBar();
+            this.applyThemeStyles();
         } catch (error) {
             console.error('创建Monaco编辑器失败:', error);
             throw error;
@@ -269,6 +811,14 @@ class AdvancedCodeEditor {
     }
     
     createFallbackEditor() {
+        this.container.innerHTML = '';
+        this.container.removeAttribute('style');
+        this.toolbar = null;
+        this.toolbarButtons = [];
+        this.statusBar = null;
+        this.editorHost = null;
+        this.skeletonElement = null;
+
         const fallbackContainer = document.createElement('div');
         fallbackContainer.className = 'fallback-code-editor';
         fallbackContainer.innerHTML = `
@@ -317,6 +867,7 @@ class AdvancedCodeEditor {
         
         this.container.appendChild(fallbackContainer);
         this.setupFallbackEditor();
+        this.applyThemeStyles();
     }
     
     setupFallbackEditor() {
@@ -882,11 +1433,14 @@ class AdvancedCodeEditor {
             // 内容变化监听
             this.model.onDidChangeContent(() => {
                 this.onContentChange();
+                this.updateStatusBar();
+                this.updateToolbarVisuals();
             });
             
             // 选择变化监听
             this.editor.onDidChangeCursorSelection(() => {
                 this.onSelectionChange();
+                this.updateStatusBar();
             });
             
             // 键盘快捷键
@@ -1001,17 +1555,72 @@ class AdvancedCodeEditor {
     }
     
     formatCode() {
-        if (this.editor) {
-            this.editor.getAction('editor.action.formatDocument').run();
+        const content = this.getValue();
+        if (!content || !content.trim()) {
+            window.RAssistant?.showToast?.('当前没有可格式化的代码', 'warning', 1800);
+            return;
+        }
+
+        const formatted = this.smartFormatR(content);
+        if (this.editor && this.model) {
+            if (formatted === content) {
+                window.RAssistant?.showToast?.('代码已经很整洁啦', 'info', 1800);
+                return;
+            }
+
+            const fullRange = this.model.getFullModelRange();
+            this.editor.pushUndoStop();
+            this.editor.executeEdits('smart-format', [{
+                range: fullRange,
+                text: formatted
+            }]);
+            this.editor.pushUndoStop();
+            this.updateStatusBar();
+            window.RAssistant?.showToast?.('代码已智能美化', 'success', 2000);
         } else if (this.textarea) {
-            // 简单的格式化逻辑
-            const content = this.textarea.value;
-            const formatted = this.simpleFormatR(content);
             this.textarea.value = formatted;
-            this.updateLineNumbers();
+            this.updateLineNumbers?.();
+            window.RAssistant?.showToast?.('已整理文本编辑器内容', 'success', 2000);
         }
     }
-    
+
+    smartFormatR(code) {
+        const indentSize = this.options.insertSpaces ? (this.options.tabSize || 2) : 1;
+        const indentUnit = this.options.insertSpaces ? ' '.repeat(indentSize) : '\t';
+        const lines = code.replace(/\r\n?/g, '\n').split('\n');
+        let indentLevel = 0;
+
+        const formattedLines = lines.map((line) => {
+            const trimmed = line.trim();
+            if (trimmed.length === 0) {
+                return '';
+            }
+
+            let leadingClosings = 0;
+            const closingMatch = trimmed.match(/^([}\]])+/);
+            if (closingMatch) {
+                leadingClosings = closingMatch[0].length;
+            }
+
+            if (/^else\b/.test(trimmed) && leadingClosings === 0) {
+                leadingClosings = 1;
+            }
+
+            let adjustedIndent = Math.max(indentLevel - leadingClosings, 0);
+            const indentation = indentUnit.repeat(adjustedIndent);
+            const formattedLine = `${indentation}${trimmed}`;
+
+            const openBraces = (trimmed.match(/\{/g) || []).length;
+            const closeBraces = (trimmed.match(/\}/g) || []).length;
+            const netClose = Math.max(closeBraces - leadingClosings, 0);
+
+            indentLevel = Math.max(adjustedIndent + openBraces - netClose, 0);
+            return formattedLine;
+        });
+
+        return formattedLines.join('\n').replace(/[\s\u00A0]+$/g, '');
+    }
+
     simpleFormatR(code) {
         // 简单的R代码格式化
         return code

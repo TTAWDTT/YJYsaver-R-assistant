@@ -19,6 +19,41 @@ from services.ai_service import AIServiceError
 logger = logging.getLogger(__name__)
 
 
+def simple_ai_response(request_type: str, content: str):
+    """Return deterministic placeholder responses for automated tests."""
+
+    sanitized = (content or "").strip()
+
+    if request_type == 'answer':
+        overview = (
+            "这是一个示例解题思路，建议结合实际数据进行验证与扩展。"
+        )
+        solutions = [
+            {
+                "title": "基础方案",
+                "code": "# 计算平均数示例\nvalues <- c(1, 2, 3, 4)\nmean(values)",
+                "explanation": "使用R内置mean函数对数值向量求平均，适用于大多数基础任务。"
+            },
+            {
+                "title": "tidyverse方案",
+                "code": "library(dplyr)\nmy_data %>% summarise(avg = mean(target, na.rm = TRUE))",
+                "explanation": "借助dplyr链式语法在数据框中计算目标列的平均值，并忽略缺失值。"
+            }
+        ]
+        return overview, solutions
+
+    if request_type == 'talk':
+        preview = sanitized[:60] or "你好"
+        return f"AI助手：我已收到你的消息“{preview}”，让我们继续讨论。"
+
+    description = (
+        "这段R代码请求已记录。运行前请确认依赖与数据源，并适当添加注释以便复现。"
+    )
+    if sanitized:
+        description += f"\n\n原始输入预览：\n{sanitized[:200]}"
+    return description
+
+
 def get_session_id(request):
     """获取或创建会话ID"""
     session_id = request.session.session_key
@@ -337,11 +372,21 @@ class TalkView(TemplateView):
         session_id = get_session_id(self.request)
         
         # 获取对话历史
-        conversation_history = ConversationHistory.objects.filter(
+        conversation_history_qs = ConversationHistory.objects.filter(
             session_id=session_id
         ).order_by('timestamp')[:50]  # 限制显示最近50条
-        
+
+        conversation_history = list(conversation_history_qs)
+
         context['conversation_history'] = conversation_history
+        context['conversation_history_json'] = [
+            {
+                'role': item.role,
+                'content': item.content,
+                'timestamp': item.timestamp.isoformat() if item.timestamp else None,
+            }
+            for item in conversation_history
+        ]
         return context
     
     def post(self, request, *args, **kwargs):
@@ -459,8 +504,39 @@ class HistoryView(ListView):
             elif date_range == 'month':
                 start_date = now - timedelta(days=30)
                 queryset = queryset.filter(created_at__gte=start_date)
+
+        keyword = self.request.GET.get('keyword')
+        if keyword:
+            queryset = queryset.filter(
+                Q(input_content__icontains=keyword) |
+                Q(response_content__icontains=keyword) |
+                Q(error_message__icontains=keyword)
+            )
         
         return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        payloads = {}
+        for record in context['history_records']:
+            payloads[str(record.id)] = {
+                'id': str(record.id),
+                'request_type': record.request_type,
+                'success': record.success,
+                'processing_time': record.processing_time,
+                'error_message': record.error_message,
+                'created_at': record.created_at.isoformat() if record.created_at else None,
+                'input_content': record.input_content or '',
+                'response_content': record.response_content or '',
+            }
+
+        context['history_payloads'] = payloads
+        context['active_filters'] = {
+            'request_type': self.request.GET.get('request_type', ''),
+            'date_range': self.request.GET.get('date_range', ''),
+            'keyword': self.request.GET.get('keyword', ''),
+        }
+        return context
 
 
 def clear_history(request):
